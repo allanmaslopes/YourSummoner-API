@@ -6,9 +6,11 @@ import com.yoursummoner.api.client.RiotgamesClient;
 import com.yoursummoner.api.model.champion.Champion;
 import com.yoursummoner.api.model.enumerator.RequestApiEnum;
 import com.yoursummoner.api.model.error.ApiError;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class StaticWS {
 
     public static String version;
@@ -32,6 +35,7 @@ public class StaticWS {
 
     private static ObjectMapper objectMapper;
 
+    @Scheduled(cron = "* 45 5 * * *")
     public static void findChampionsList() throws ApiError {
         //Método que vai retirar do map e jogar dentro de um List
         //Por quê ? Porque é mais fácil de trabalhar com List
@@ -58,6 +62,7 @@ public class StaticWS {
         championsList = allChampionsList;
     }
 
+    @Scheduled(cron = "* 30 5 * * *")
     public static void findPatch() throws ApiError {
         ResponseEntity<String> result;
         String[] arrayVersion;

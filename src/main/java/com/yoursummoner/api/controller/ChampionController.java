@@ -3,6 +3,7 @@ package com.yoursummoner.api.controller;
 import com.yoursummoner.api.model.error.ApiError;
 import com.yoursummoner.api.service.ChampionWS;
 import com.yoursummoner.api.service.StaticWS;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 })
 @RestController
 @RequestMapping(value = "champions", produces = MediaType.APPLICATION_JSON_VALUE)
+@Slf4j
 public class ChampionController {
 
     @Autowired
@@ -28,12 +30,12 @@ public class ChampionController {
         try {
             StaticWS.findPatch();
             response = new ResponseEntity<>(StaticWS.version, HttpStatus.OK);
-            System.out.println("New version loaded, HttpStatus: " + HttpStatus.OK);
+            log.info("New version loaded -> {}", StaticWS.version);
         } catch (ApiError ex) {
-            ex.printStackTrace();
+            log.error("Error to call method loadFindVersion -> {}, httpstatus -> {}", ex.getMessage(), ex.getHttpStatus());
             response = new ResponseEntity<>(ex, ex.getHttpStatus());
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Error to call method loadFindVersion -> {}", ex.getMessage());
             response = new ResponseEntity<>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -47,12 +49,12 @@ public class ChampionController {
         try {
             StaticWS.findChampionsList();
             response = new ResponseEntity<>(StaticWS.getChampionsList(), StaticWS.getChampionsList().isEmpty() ? HttpStatus.NO_CONTENT : HttpStatus.OK);
-            System.out.println("Champion list filled, HttpStatus: " + HttpStatus.OK);
+            log.info("Champion list filled, size -> {}",StaticWS.getChampionsList().size());
         } catch (ApiError ex) {
-            ex.printStackTrace();
+            log.error("Error method loadAllChampions -> {}, status -> {}", ex.getMessage(), ex.getHttpStatus());
             response = new ResponseEntity<>(ex, ex.getHttpStatus());
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Error method loadAllChampions -> {}", ex.getMessage());
             response = new ResponseEntity<>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return response;
@@ -71,8 +73,10 @@ public class ChampionController {
             }
 
         } catch (ApiError ex) {
+            log.error("Error method loadAllChampions -> {}, status -> {}", ex.getMessage(), ex.getHttpStatus());
             response = new ResponseEntity<>(ex, ex.getHttpStatus());
         } catch (Exception ex) {
+            log.error("Error method loadAllChampions -> {}", ex.getMessage());
             response = new ResponseEntity<>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

@@ -4,6 +4,7 @@ import com.yoursummoner.api.model.enumerator.RequestApiEnum;
 import com.yoursummoner.api.model.error.ApiError;
 import com.yoursummoner.api.utils.UtilsWS;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -17,6 +18,9 @@ import java.util.Objects;
 public class RESTClient {
     @Autowired
     RestTemplate restTemplate;
+
+    @Value("${token}")
+    String token;
 
     /**
      * @param requestParams  {@link Map} com parâmetros de requisição — Aceita nullable
@@ -64,7 +68,7 @@ public class RESTClient {
         HttpHeaders headers = new HttpHeaders();
 
         try {
-            headers.add("X-Riot-Token", "RGAPI-4e7622ed-c9b9-46e1-83f7-50c77661ba81");
+            headers.add("X-Riot-Token", token);
             headers.add(HttpHeaders.ACCEPT, "application/json");
             headers.add("Content-Encoding", "gzip, deflate, br");
         } catch (Exception ex) {
