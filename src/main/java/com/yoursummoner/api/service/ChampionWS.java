@@ -201,19 +201,19 @@ public class ChampionWS {
     public Map<String, Double> mapChampionsMostPlayed(String lane) throws ApiError {
         String request = riotgamesClient.getChampionsMostPlayed();
 
-        String laneData = request.split("a.exports=")[1];
+        String laneData = request.split("e.exports=JSON.parse\\('")[1];
 
-        laneData = laneData.replace("},function(){}]);", "");
+        laneData = laneData.replace("')},(e,t,n)=>{n.r(t)}],t={};function n(r){var o=t[r];if(void 0!==o)return o.exports;var c=t[r]={exports:{}};return e[r](c,c.exports,n),c.exports}n.r=e=>{\"undefined\"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:\"Module\"}),Object.defineProperty(e,\"__esModule\",{value:!0})},(()=>{var e,t=(e=n(1))&&e.__esModule?e:{default:e};n(3);const r=document.currentScript.ownerDocument;const o=window.getPluginAnnounceEventName(\"rcp-fe-lol-champion-statistics\");r.addEventListener(o,(function(e){(0,e.registrationHandler)((function(){return(0,t.default)()}))}),{once:!0})})()})();", "");
 
         Map<String, Double> championsMap = new HashMap<>();
 
         JSONObject jsonObject = new JSONObject(laneData);
 
         try {
-            Map<String, String> auxMap = objectMapper.readValue(jsonObject.get(lane).toString(), HashMap.class);
+            Map<String, Double> auxMap = objectMapper.readValue(jsonObject.get(lane).toString(), HashMap.class);
 
-            for (Map.Entry<String, String> champion : auxMap.entrySet()) {
-                championsMap.put(champion.getKey(), Double.parseDouble(champion.getValue()));
+            for (Map.Entry<String, Double> champion : auxMap.entrySet()) {
+                championsMap.put(champion.getKey(), champion.getValue());
             }
 
             auxMap.clear();

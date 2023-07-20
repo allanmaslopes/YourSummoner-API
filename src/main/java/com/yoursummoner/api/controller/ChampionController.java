@@ -67,9 +67,9 @@ public class ChampionController {
         return response;
     }
 
-    @GetMapping("/by-lane/{nick}")
+    @GetMapping("/summoner/{nick}/lane/{lane}")
     public ResponseEntity<Object> allChampionsByMastery(@PathVariable String nick,
-                                                        @RequestParam(name = "lane") String lane) {
+                                                        @PathVariable String lane) {
         ResponseEntity<Object> response;
 
         try {
