@@ -24,7 +24,7 @@ public class MatchController {
     @GetMapping("/{nick}")
     public ResponseEntity<Object> searchMatchs(
             @PathVariable String nick,
-            @RequestParam(name = "quantidade", required = false) Integer quantidade,
+            @RequestParam(name = "quantity", required = false) Integer quantity,
             @RequestParam(name = "startTime", required = false) Long startTime,
             @RequestParam(name = "endTime", required = false) Long endTime,
             @RequestParam(name = "queue", required = false) Integer queue,
@@ -34,7 +34,7 @@ public class MatchController {
         ResponseEntity<Object> response;
 
         try {
-            MatchRequest matchRequest = new MatchRequest(startTime, endTime, queue, type, start, quantidade);
+            MatchRequest matchRequest = new MatchRequest(startTime, endTime, queue, type, start, quantity);
             response = new ResponseEntity<>(matchWS.getMatchId(nick, matchRequest), HttpStatus.OK);
         } catch (ApiError ex) {
             response = new ResponseEntity<>(ex, ex.getHttpStatus());

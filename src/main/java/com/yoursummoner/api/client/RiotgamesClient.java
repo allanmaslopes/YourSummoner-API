@@ -1,7 +1,7 @@
 package com.yoursummoner.api.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yoursummoner.api.model.enumerator.RequestApiEnum;
+import com.yoursummoner.api.enumeration.RequestApiEnum;
 import com.yoursummoner.api.model.error.ApiError;
 import com.yoursummoner.api.model.match.MatchRequest;
 import com.yoursummoner.api.service.StaticWS;

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yoursummoner.api.client.RESTClient;
 import com.yoursummoner.api.client.RiotgamesClient;
 import com.yoursummoner.api.model.champion.Champion;
-import com.yoursummoner.api.model.enumerator.RequestApiEnum;
+import com.yoursummoner.api.enumeration.RequestApiEnum;
 import com.yoursummoner.api.model.error.ApiError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +36,11 @@ public class StaticWS {
     private static ObjectMapper objectMapper;
 
     @Scheduled(cron = "* 45 5 * * *")
-    public static void findChampionsList() throws ApiError {
+    public static void findChampionsList() {
         //Método que vai retirar do map e jogar dentro de um List
         //Por quê ? Porque é mais fácil de trabalhar com List
-        List<Champion> allChampionsList;
-
+        List<Champion> allChampionsList = new ArrayList<>(0);
+        log.info("Loading champions list...");
         try {
             //Obtendo valor dos campeões
             Map<String, Champion> championMap = championWS.mapChampions();
@@ -54,29 +54,31 @@ public class StaticWS {
                 throw new ApiError(ChampionWS.class, "allChampionsList", "Map of champions isEmpty", HttpStatus.NO_CONTENT);
             }
         } catch (ApiError ex) {
-            throw ex;
+            log.error("Error to call method allChampionsList -> {}, httpstatus -> {}", ex.getMessage(), ex.getHttpStatus());
         } catch (Exception ex) {
-            throw new ApiError(ChampionWS.class, "allChampionsList", "Error to List the mapped champions", ex.getLocalizedMessage());
+            log.error("Error to call method allChampionsList -> {}", ex.getMessage());
         }
 
         championsList = allChampionsList;
+        log.info("Champions list changed -> {}", allChampionsList.size());
     }
 
     @Scheduled(cron = "* 30 5 * * *")
-    public static void findPatch() throws ApiError {
+    public static void findPatch() {
         ResponseEntity<String> result;
-        String[] arrayVersion;
+        String[] arrayVersion = new String[0];
 
+        log.info("Loading new version...");
         try {
             result = restClient.sendReceive(null, "api/versions.json", RequestApiEnum.DDRAGON);
             arrayVersion = objectMapper.readValue(result.getBody(), String[].class);
         } catch (ApiError ex) {
-            throw ex;
+            log.error("Error to call method loadFindVersion -> {}, httpstatus -> {}", ex.getMessage(), ex.getHttpStatus());
         } catch (Exception ex) {
-            throw new ApiError(RiotgamesClient.class, "findPatch", "Error to set a last version", ex.getLocalizedMessage());
+            log.error("Error to call method loadFindVersion -> {}", ex.getMessage());
         }
-
         version = arrayVersion[0];
+        log.info("New version loaded -> {}", StaticWS.version);
     }
 
     @Autowired

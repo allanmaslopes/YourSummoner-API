@@ -1,6 +1,6 @@
 package com.yoursummoner.api.client;
 
-import com.yoursummoner.api.model.enumerator.RequestApiEnum;
+import com.yoursummoner.api.enumeration.RequestApiEnum;
 import com.yoursummoner.api.model.error.ApiError;
 import com.yoursummoner.api.utils.UtilsWS;
 import org.springframework.beans.factory.annotation.Autowired;

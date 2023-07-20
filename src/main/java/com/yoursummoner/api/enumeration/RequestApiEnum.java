@@ -1,4 +1,4 @@
-package com.yoursummoner.api.model.enumerator;
+package com.yoursummoner.api.enumeration;
 
 public enum RequestApiEnum {
 

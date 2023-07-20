@@ -1,6 +1,8 @@
 package com.yoursummoner.api.config;
 
 import com.yoursummoner.api.controller.ChampionController;
+import com.yoursummoner.api.model.error.ApiError;
+import com.yoursummoner.api.service.StaticWS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,9 +13,6 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class RiotgamesConfiguration {
 
-    @Autowired
-    ChampionController championController;
-
     @Bean
     public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
@@ -23,13 +22,13 @@ public class RiotgamesConfiguration {
     }
 
     @Bean
-    public ResponseEntity<Object> loadFindVersion() {
-        return championController.loadFindVersion();
+    public void loadFindVersion()  {
+        StaticWS.findPatch();
     }
 
     @Bean
-    public ResponseEntity<Object> loadChampionsList() {
-        return championController.loadAllChampions();
+    public void loadChampionsList() {
+        StaticWS.findChampionsList();
     }
 
 
