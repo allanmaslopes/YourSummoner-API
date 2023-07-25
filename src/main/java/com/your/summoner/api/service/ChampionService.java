@@ -2,8 +2,8 @@ package com.your.summoner.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.your.summoner.api.client.ChampionClient;
-import com.your.summoner.api.model.Dto.ChampionDto;
-import com.your.summoner.api.model.Dto.ChampionMasteryDto;
+import com.your.summoner.api.model.dto.ChampionDto;
+import com.your.summoner.api.model.dto.ChampionMasteryDto;
 import com.your.summoner.api.model.Summoner;
 import com.your.summoner.api.model.champion.Champion;
 import com.your.summoner.api.model.champion.ChampionByMastery;

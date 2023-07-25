@@ -10,17 +10,17 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Ranking {
-    public String leagueId;
-    public String queueType;
-    public String tier;
-    public String rank;
-    public String summonerId;
-    public String summonerName;
-    public int leaguePoints;
-    public int wins;
-    public int losses;
-    public boolean veteran;
-    public boolean inactive;
-    public boolean freshBlood;
-    public boolean hotStreak;
+    private String leagueId;
+    private String queueType;
+    private String tier;
+    private String rank;
+    private String summonerId;
+    private String summonerName;
+    private int leaguePoints;
+    private int wins;
+    private int losses;
+    private boolean veteran;
+    private boolean inactive;
+    private boolean freshBlood;
+    private boolean hotStreak;
 }

@@ -2,12 +2,16 @@ package com.your.summoner.api.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.your.summoner.api.enumeration.RequestApiEnum;
+import com.your.summoner.api.model.Ranking;
 import com.your.summoner.api.model.Summoner;
 import com.your.summoner.api.model.error.ApiError;
 import com.your.summoner.api.service.StaticService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class SummonerClient {
@@ -49,6 +53,23 @@ public class SummonerClient {
         }
 
         return result.getBody();
+    }
+
+    public List<Ranking> rankingBySummoner(String encryptedSummonerId) throws ApiError {
+        List<Ranking> rankingList;
+
+        String uri = String.format("/lol/league/v4/entries/by-summoner/%s", encryptedSummonerId);
+
+        try {
+            String result = restClient.sendReceive(null, uri, RequestApiEnum.BR).getBody();
+            rankingList = Arrays.asList(objectMapper.readValue(result, Ranking[].class));
+        } catch (ApiError ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new ApiError(SummonerClient.class, "findChampions", "Falha ao efetuar request", ex.getLocalizedMessage());
+        }
+
+        return rankingList;
     }
 
 }

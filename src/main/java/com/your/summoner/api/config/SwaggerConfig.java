@@ -23,7 +23,7 @@ public class SwaggerConfig extends WebMvcConfigurationSupport {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.yoursummoner.api.controller"))
+                .apis(RequestHandlerSelectors.basePackage("com.your.summoner.api.controller"))
                 .paths(PathSelectors.any())
                 .build();
     }

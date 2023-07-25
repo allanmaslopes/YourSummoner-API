@@ -1,4 +1,4 @@
-package com.your.summoner.api.model.Dto;
+package com.your.summoner.api.model.dto;
 
 import com.your.summoner.api.model.champion.ChampionByMastery;
 

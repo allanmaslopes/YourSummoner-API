@@ -98,7 +98,7 @@ public class StaticService {
 
         log.info("Loading new version...");
         try {
-            result = restClient.sendReceive(null, "api/versions.json", RequestApiEnum.DDRAGON);
+            result = restClient.sendReceive(null, "/api/versions.json", RequestApiEnum.DDRAGON);
             arrayVersion = objectMapper.readValue(result.getBody(), String[].class);
         } catch (ApiError ex) {
             log.error("Error to call method loadFindVersion -> {}, httpstatus -> {}", ex.getMessage(), ex.getHttpStatus());

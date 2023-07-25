@@ -3,8 +3,8 @@ package com.your.summoner.api.controller;
 import com.your.summoner.api.model.error.ApiError;
 import com.your.summoner.api.service.ChampionService;
 import com.your.summoner.api.service.StaticService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 })
 @RestController
 @RequestMapping(value = "champions", produces = MediaType.APPLICATION_JSON_VALUE)
-@Slf4j
+@Api
 public class ChampionController {
 
     @Autowired
