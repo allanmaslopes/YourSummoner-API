@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -75,7 +74,8 @@ public class UtilsWS {
      * @apiNote Método para montar parâmetros de requisição de forma dinâmica
      */
     public static String buildUri(Map<String, ?> requestMap, String url, String uri) throws ApiError {
-        UriComponentsBuilder endpoint = UriComponentsBuilder.fromHttpUrl(url + uri);
+
+        UriComponentsBuilder endpoint = UriComponentsBuilder.fromHttpUrl(url);
 
         if (requestMap != null && !requestMap.isEmpty()) {
             try {
@@ -85,14 +85,12 @@ public class UtilsWS {
                         endpoint.queryParam(uriParams.getKey(), uriParams.getValue());
                     }
                 }
-                endpoint.encode(StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 throw new ApiError(UtilsWS.class, "buildUri", "Error to create request params", ex.getLocalizedMessage());
             }
         }
 
-
-        return endpoint.toUriString();
+        return endpoint.toUriString() + uri;
     }
 
     @Autowired

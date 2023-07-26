@@ -82,6 +82,11 @@ public class ApiError extends Exception {
     public ApiError() {
     }
 
+    public ApiError(HttpStatus httpStatus, Object apiError) {
+        this.httpStatus = httpStatus;
+        this.apiError = apiError;
+    }
+
     //Retira throwable
     @JsonIgnore
     @Override

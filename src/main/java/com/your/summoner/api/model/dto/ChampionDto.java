@@ -1,10 +1,20 @@
 package com.your.summoner.api.model.dto;
 
 import com.your.summoner.api.model.champion.Champion;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChampionDto {
+
+    private String id;
 
     private String key;
 
@@ -13,32 +23,9 @@ public class ChampionDto {
     private List<String> tags;
 
     public ChampionDto(Champion champion) {
+        this.id = champion.getId();
         this.key = champion.getKey();
         this.name = champion.getName();
         this.tags = champion.getTags();
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<String> tags) {
-        this.tags = tags;
     }
 }

@@ -20,4 +20,6 @@ public class SummonerProfileDto {
     Integer level;
 
     List<RankingDto> rankingList;
+
+    List<MainChampionDto> mainChampionList;
 }
