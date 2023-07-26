@@ -28,6 +28,7 @@ public class RankingDto {
 
     private boolean hotStreak;
 
+    private double winRate;
 
     public RankingDto(Ranking ranking) {
         this.queueType = ranking.getQueueType();
@@ -38,5 +39,6 @@ public class RankingDto {
         this.losses = ranking.getLosses();
         this.quantMatchs = ranking.getWins() +  ranking.getLosses();
         this.hotStreak = ranking.isHotStreak();
+        this.winRate = Math.round((double) wins * 100 / quantMatchs);
     }
 }
