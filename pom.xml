@@ -12,7 +12,7 @@
 	<artifactId>api</artifactId>
 	<version>1.0.0</version>
 	<name>Riot-Games-API</name>
-	<description>Cliet of API Riot Games</description>
+	<description>Client of API Riot Games</description>
 	<properties>
 		<java.version>11</java.version>
 		<maven.compiler.source>11</maven.compiler.source>

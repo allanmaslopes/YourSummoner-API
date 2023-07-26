@@ -49,7 +49,7 @@ public class SummonerService {
     private SummonerProfileDto summonerProfileDtoConstruct(Summoner summoner, List<Ranking> rankingList) {
         return new SummonerProfileDto(
                 summoner.getName(),
-                urlIconBuilder(summoner.getSummonerLevel()),
+                urlIconBuilder(summoner.getProfileIconId()),
                 summoner.getSummonerLevel(),
                 getRankingDto(rankingList)
         );
@@ -59,7 +59,7 @@ public class SummonerService {
         return rankingList.stream().map(RankingDto::new).collect(Collectors.toList());
     }
 
-    private String urlIconBuilder(Integer summonerLevel) {
-        return String.format("%s/cdn/%s/img/profileicon/%d.png", RequestApiEnum.DDRAGON.getClientAmbiente(), StaticService.version, summonerLevel);
+    private String urlIconBuilder(Integer profileIconId) {
+        return String.format("%s/cdn/%s/img/profileicon/%d.png", RequestApiEnum.DDRAGON.getClientAmbiente(), StaticService.version, profileIconId);
     }
 }
