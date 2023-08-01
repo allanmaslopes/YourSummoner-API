@@ -32,7 +32,7 @@ public class RankingDto {
 
     public RankingDto(Ranking ranking) {
         this.queueType = ranking.getQueueType();
-        this.tier = tierFisrtLetterUpperCase(ranking.getTier());
+        this.tier = tierFirstLetterUpperCase(ranking.getTier());
         this.rank = ranking.getRank();
         this.leaguePoints = ranking.getLeaguePoints();
         this.wins = ranking.getWins();
@@ -42,21 +42,25 @@ public class RankingDto {
         this.winRate = Math.round((double) wins * 100 / quantMatchs);
     }
 
-    public String tierFisrtLetterUpperCase(String tier) {
+    public String tierFirstLetterUpperCase(String tier) {
 
-        char[] tierClear = new char[tier.toCharArray().length];
+        if (tier != null && !tier.isEmpty()) {
+            char[] tierClear = new char[tier.toCharArray().length];
 
-        for (int i = 0; i < tier.toCharArray().length; i++) {
+            for (int i = 0; i < tier.toCharArray().length; i++) {
 
-            if (i == 0) {
-                tierClear[i] = tier.toCharArray()[i];
-            }else {
-                tierClear[i] = tier.toLowerCase().toCharArray()[i];
+                if (i == 0) {
+                    tierClear[i] = tier.toCharArray()[i];
+                } else {
+                    tierClear[i] = tier.toLowerCase().toCharArray()[i];
+                }
+
             }
 
+            return new String(tierClear);
+        } else {
+            return "";
         }
-
-        return new String(tierClear);
     }
 
 }
