@@ -109,12 +109,12 @@ public class ChampionService {
      * @throws ApiError classe de exceção RiotGamesClient
      * @apiNote Chamada e construção do fluxo de lista de campões por maestria
      */
-    public List<ChampionMasteryDto> getChampionsByMastery(String nick) throws ApiError {
+    public List<ChampionMasteryDto> getChampionsByMastery(String nick, String tag) throws ApiError {
         //Buscando invocador
-        Summoner summoner = summonerService.findSummoner(nick);
+        Summoner summoner = summonerService.findSummoner(nick, tag);
 
         //Recuperando maestrias por invocador
-        List<ChampionByMastery> championsByMasteries = getMasteryBySummoner(summoner.getId());
+        List<ChampionByMastery> championsByMasteries = getMasteryBySummoner(summoner.getPuuid());
 
         //Todos os champs
         List<ChampionDto> championDto = getCampeaoDtos();
@@ -167,8 +167,8 @@ public class ChampionService {
      * @return {@code List<ChampionMasteryDto>}
      * @throws ApiError classe de exceção RiotGamesClient
      */
-    public List<ChampionMasteryDto> getFilterSearchChampions(String nick, String lane) throws ApiError {
-        List<ChampionMasteryDto> masteryDtos = listChampionsMostPlayed(nick, lane);
+    public List<ChampionMasteryDto> getFilterSearchChampions(String nick, String tag, String lane) throws ApiError {
+        List<ChampionMasteryDto> masteryDtos = listChampionsMostPlayed(nick, tag, lane);
         List<ChampionMasteryDto> filterMasteryList = new ArrayList<>();
 
         try {
@@ -230,8 +230,8 @@ public class ChampionService {
      * @return {@code List<ChampionMasteryDto>}
      * @throws ApiError classe de exceção RiotGamesClient
      */
-    public List<ChampionMasteryDto> listChampionsMostPlayed(String nick, String lane) throws ApiError {
-        List<ChampionMasteryDto> championMasteryDtoListAux = getChampionsByMastery(nick);
+    public List<ChampionMasteryDto> listChampionsMostPlayed(String nick, String tag, String lane) throws ApiError {
+        List<ChampionMasteryDto> championMasteryDtoListAux = getChampionsByMastery(nick, tag);
         Map<String, Double> mapChampions = mapChampionsMostPlayed(lane);
         List<ChampionMasteryDto> championMasteryDtoList = new ArrayList<>();
 

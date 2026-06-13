@@ -54,7 +54,7 @@ public class ChampionClient {
     public String getChampionsByMastery(String encryptedId) throws ApiError {
         ResponseEntity<String> result;
 
-        String uri = "/lol/champion-mastery/v4/champion-masteries/by-summoner/" + encryptedId;
+        String uri = "/lol/champion-mastery/v4/champion-masteries/by-puuid/" + encryptedId;
 
         try {
             result = restClient.sendReceive(null, uri, RequestApiEnum.BR);

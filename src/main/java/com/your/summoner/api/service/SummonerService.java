@@ -4,6 +4,7 @@ import com.your.summoner.api.client.SummonerClient;
 import com.your.summoner.api.enumeration.RequestApiEnum;
 import com.your.summoner.api.model.Ranking;
 import com.your.summoner.api.model.Summoner;
+import com.your.summoner.api.model.SummonerDetails;
 import com.your.summoner.api.model.champion.ChampionDetail;
 import com.your.summoner.api.model.dto.ChampionMasteryDto;
 import com.your.summoner.api.model.dto.MainChampionDto;
@@ -28,31 +29,38 @@ public class SummonerService {
     @Autowired
     ChampionService championService;
 
-    public Summoner findSummoner(String nick) throws ApiError {
-        Summoner summoner = summonerClient.findSummonerByNick(nick);
+    public Summoner findSummoner(String nick, String tag) throws ApiError {
+        Summoner summoner = summonerClient.findSummonerByNick(nick, tag);
 
-        if (nick == null || nick.isBlank() || nick.isEmpty()) {
+        if (nick == null || nick.isBlank()) {
             throw new ApiError(ChampionService.class, "findSummoner", "Nickname is empty or blank", HttpStatus.BAD_REQUEST);
         }
         return summoner;
     }
 
-    public SummonerProfileDto findSummonerProfile(String nick) throws ApiError {
+    public SummonerProfileDto findSummonerProfile(String nick, String tag) throws ApiError {
         SummonerProfileDto summonerProfileDto;
 
-        if (nick == null || nick.isBlank() || nick.isEmpty()) {
+        if (nick == null || nick.isBlank()) {
             throw new ApiError(ChampionService.class, "findSummoner", "Nickname is empty or blank", HttpStatus.BAD_REQUEST);
         }
 
-        Summoner summoner = summonerClient.findSummonerByNick(nick);
+        if (tag == null || tag.isBlank()) {
+            throw new ApiError(ChampionService.class, "findSummoner", "Tag is empty or blank", HttpStatus.BAD_REQUEST);
+        }
 
-        List<Ranking> rankingList = summonerClient.rankingBySummoner(summoner.getId());
+        Summoner summoner = summonerClient.findSummonerByNick(nick, tag);
 
-        List<ChampionMasteryDto> getChampionMasteryDto = championService.getChampionsByMastery(summoner.getName());
+        SummonerDetails summonerDetails =  summonerClient.findSummonerDetails(summoner.getPuuid());
+
+
+        List<Ranking> rankingList = summonerClient.rankingBySummoner(summoner.getPuuid());
+
+        List<ChampionMasteryDto> getChampionMasteryDto = championService.getChampionsByMastery(summoner.getGameName(), summoner.getTagLine());
 
         List<MainChampionDto> mainChampionList = mainChampionDtoBuilder(getChampionMasteryDto);
 
-        summonerProfileDto = summonerProfileDtoConstruct(summoner, mainChampionList, rankingList);
+        summonerProfileDto = summonerProfileDtoConstruct(summoner, mainChampionList, rankingList, summonerDetails);
 
         return summonerProfileDto;
     }
@@ -87,11 +95,11 @@ public class SummonerService {
         return String.format("%s/cdn/%s/img/champion/%s.png", RequestApiEnum.DDRAGON.getClientAmbiente(), StaticService.version, championName);
     }
 
-    private SummonerProfileDto summonerProfileDtoConstruct(Summoner summoner, List<MainChampionDto> mainChampionList, List<Ranking> rankingList) {
+    private SummonerProfileDto summonerProfileDtoConstruct(Summoner summoner, List<MainChampionDto> mainChampionList, List<Ranking> rankingList, SummonerDetails summonerDetails) {
         return new SummonerProfileDto(
-                summoner.getName(),
-                urlIconBuilder(summoner.getProfileIconId()),
-                summoner.getSummonerLevel(),
+                summoner.getGameName(),
+                urlIconBuilder(summonerDetails.getProfileIconId()),
+                summonerDetails.getSummonerLevel(),
                 getRankingDto(rankingList),
                 mainChampionList
         );

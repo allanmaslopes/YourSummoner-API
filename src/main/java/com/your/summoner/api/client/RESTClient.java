@@ -69,7 +69,7 @@ public class RESTClient {
 
         try {
             headers.add("X-Riot-Token", token);
-            headers.add(HttpHeaders.ACCEPT, "application/json");
+            //headers.add(HttpHeaders.ACCEPT, "application/json");
             headers.add(HttpHeaders.ACCEPT_LANGUAGE, "pt-BR,pt;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
             headers.add("Content-Encoding", "gzip, deflate, br");
             headers.add(HttpHeaders.ACCEPT_CHARSET, "application/x-www-form-urlencoded; charset=UTF-8");

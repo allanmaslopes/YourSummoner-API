@@ -26,11 +26,11 @@ public class MatchService {
     @Autowired
     ObjectMapper objectMapper;
 
-    public List<String> getMatchId(String nick, MatchRequest matchRequest) throws ApiError {
+    public List<String> getMatchId(String nick, String tag, MatchRequest matchRequest) throws ApiError {
         String[] matchList;
         String request;
 
-        Summoner summoner = summonerService.findSummoner(nick);
+        Summoner summoner = summonerService.findSummoner(nick, tag);
 
         try {
             request = matchClient.findMatchList(summoner.getPuuid(), matchRequest);

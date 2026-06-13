@@ -24,17 +24,17 @@ public class SummonerController {
     @Autowired
     SummonerService summonerService;
 
-    @GetMapping("/{nick}")
+    @GetMapping("/{nick}/{tag}")
     @ApiOperation(value = "Return's summoner profile information", response = SummonerProfileDto.class)
-    public ResponseEntity<Object> searchSummoner(@PathVariable String nick) {
+    public ResponseEntity<Object> searchSummoner(@PathVariable String nick, @PathVariable String tag) {
         ResponseEntity<Object> response;
 
         try {
-            response = new ResponseEntity<>(summonerService.findSummonerProfile(nick), HttpStatus.OK);
+            response = new ResponseEntity<>(summonerService.findSummonerProfile(nick, tag), HttpStatus.OK);
         } catch (ApiError ex) {
             response = new ResponseEntity<>(ex, ex.getHttpStatus());
         }
 
         return response;
     }
-}
+}//https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/Humanzee/S%C3%ADmio?api_key=RGAPI-3103e905-d5cf-4dfe-9101-cb698db8937c

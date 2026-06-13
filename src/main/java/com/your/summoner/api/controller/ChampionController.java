@@ -53,12 +53,12 @@ public class ChampionController {
 
     }
 
-    @GetMapping("/by-mastery/{nick}")
-    public ResponseEntity<Object> allChampionsByMastery(@PathVariable String nick) {
+    @GetMapping("/by-mastery/{nick}/{tag}")
+    public ResponseEntity<Object> allChampionsByMastery(@PathVariable String nick, @PathVariable String tag) {
         ResponseEntity<Object> response;
 
         try {
-            response = new ResponseEntity<>(championService.getChampionsByMastery(nick), HttpStatus.OK);
+            response = new ResponseEntity<>(championService.getChampionsByMastery(nick, tag), HttpStatus.OK);
         } catch (ApiError ex) {
             response = new ResponseEntity<>(ex, ex.getHttpStatus());
         }
@@ -66,13 +66,14 @@ public class ChampionController {
         return response;
     }
 
-    @GetMapping("/summoner/{nick}/lane/{lane}")
+    @GetMapping("/summoner/{nick}/tag/{tag}/lane/{lane}")
     public ResponseEntity<Object> allChampionsByMastery(@PathVariable String nick,
+                                                        @PathVariable String tag,
                                                         @PathVariable String lane) {
         ResponseEntity<Object> response;
 
         try {
-            response = new ResponseEntity<>(championService.getFilterSearchChampions(nick, lane), HttpStatus.OK);
+            response = new ResponseEntity<>(championService.getFilterSearchChampions(nick, lane, tag), HttpStatus.OK);
         } catch (ApiError ex) {
             response = new ResponseEntity<>(ex, ex.getHttpStatus());
         }

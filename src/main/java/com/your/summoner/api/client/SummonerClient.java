@@ -4,13 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.your.summoner.api.enumeration.RequestApiEnum;
 import com.your.summoner.api.model.Ranking;
 import com.your.summoner.api.model.Summoner;
+import com.your.summoner.api.model.SummonerDetails;
+import com.your.summoner.api.model.dto.SummonerProfileDto;
 import com.your.summoner.api.model.error.ApiError;
 import com.your.summoner.api.service.StaticService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -22,18 +26,36 @@ public class SummonerClient {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public Summoner findSummonerByNick(String nickName) throws ApiError {
-        Summoner result;
+    public Summoner findSummonerByNick(String nickName, String tag) throws ApiError {
 
-        String uri = "/lol/summoner/v4/summoners/by-name/" + nickName;
+        Summoner result;
+        String uri = String.format("/riot/account/v1/accounts/by-riot-id/%s/%s", nickName, tag);
 
         try {
-            String response = restClient.sendReceive(null, uri, RequestApiEnum.BR).getBody();
+            String response = restClient.sendReceive(null, uri, RequestApiEnum.AMERICAS).getBody();
             result = objectMapper.readValue(response, Summoner.class);
         } catch (ApiError ex) {
             throw ex;
         } catch (Exception ex) {
             throw new ApiError(SummonerClient.class, "findSummonerByNick", "Falha ao converter request", ex.getLocalizedMessage());
+        }
+
+
+        return result;
+    }
+
+    public SummonerDetails findSummonerDetails(String encryptedPUUID) throws ApiError {
+
+        SummonerDetails result;
+        String uri = String.format("/lol/summoner/v4/summoners/by-puuid/%s", encryptedPUUID);
+
+        try {
+            String response = restClient.sendReceive(null, uri, RequestApiEnum.BR).getBody();
+            result = objectMapper.readValue(response, SummonerDetails.class);
+        } catch (ApiError ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new ApiError(SummonerClient.class, "findSummonerDetails", "Falha ao converter request", ex.getLocalizedMessage());
         }
 
         return result;
@@ -58,7 +80,7 @@ public class SummonerClient {
     public List<Ranking> rankingBySummoner(String encryptedSummonerId) throws ApiError {
         List<Ranking> rankingList;
 
-        String uri = String.format("/lol/league/v4/entries/by-summoner/%s", encryptedSummonerId);
+        String uri = String.format("/lol/league/v4/entries/by-puuid/%s", encryptedSummonerId);
 
         try {
             String result = restClient.sendReceive(null, uri, RequestApiEnum.BR).getBody();
