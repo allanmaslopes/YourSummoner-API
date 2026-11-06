@@ -88,7 +88,9 @@ Fonte de verdade: worktree `D:\Workspace\YourSummoner-API-quarkus`. Leia o códi
 | `champion_details` | Detalhe de cada campeão no patch (`champion/{id}.json`) | `{patch, locale, championId}` |
 | `champion_statistics` | Pick rate por lane do Community Dragon (`/latest/plugins/rcp-fe-lol-champion-statistics/...`). O Community Dragon só serve o `latest`, então o documento guarda o snapshot e o patch ativo na hora em que foi baixado | `patch` |
 
-As skins vêm do `champion/{id}.json` do Data Dragon e ficam dentro de `champion_details`, já sem chromas (regra do commit `2f01414`).
+| `skins` | Uma skin por documento, vinda do `champion/{id}.json` do Data Dragon, já sem chromas (regra do commit `2f01414`), com `skinId`, `num`, nome e URLs de splash e loading | `{patch, locale, championId, num}` |
+
+As skins também continuam dentro do `ChampionDetail` devolvido por `find-champion`, como no Quarkus. Endpoint novo: `GET /champions/{championName}/skins?patch=` (seção 6.4).
 
 **Locale:** só `pt_BR`, vindo de `yoursummoner.locale`. Não existe `?locale=` nesta entrega. A chave guarda o locale para permitir outro sem migração. Trocar `yoursummoner.locale` (ex.: para `en_US`) e reiniciar tem que funcionar já nesta entrega: o patch ativo é ingerido no locale novo e os dados do locale antigo continuam no Mongo. Isso precisa de teste. A troca de idioma por requisição (`?locale=` ou `Accept-Language`) fica mapeada no roadmap como próxima atualização. Um patch está `READY` quando `champion.json` e todos os `champion/{id}.json` desse locale foram gravados.
 
@@ -114,6 +116,7 @@ O que é necessário para os endpoints atuais entra primeiro. Itens, runas e fei
 ### 6.4 Endpoints novos
 
 - `GET /patches`: lista as versões conhecidas e qual é a ativa.
+- `GET /champions/{championName}/skins?patch=`: skins do campeão no patch, com splash e loading.
 - `?patch=` opcional nos endpoints de `/champions` que usam o catálogo (`find-champion`, `by-mastery`, lane). `findVersion` devolve o patch ativo.
 - `/matchs` e `/summoners` não dependem do catálogo hoje (no Quarkus só `ChampionService` e `SummonerProfileService` usam `GameDataProvider`; o perfil usa o patch ativo). Eles não ganham `?patch=`.
 
