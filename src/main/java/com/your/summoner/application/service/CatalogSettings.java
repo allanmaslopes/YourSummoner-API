@@ -1,7 +1,17 @@
 package com.your.summoner.application.service;
 
 import java.time.Duration;
+import java.util.Objects;
+import java.util.function.Supplier;
 
-/** Único ponto de leitura do locale do catálogo (a Task 12 pode trocar a origem do valor). */
-public record CatalogSettings(String locale, Duration lockStaleAfter) {
+/** Reads the current catalog locale whenever it is used. */
+public record CatalogSettings(Supplier<String> localeSource, Duration lockStaleAfter) {
+    public CatalogSettings {
+        Objects.requireNonNull(localeSource, "localeSource");
+        Objects.requireNonNull(lockStaleAfter, "lockStaleAfter");
+    }
+
+    public String locale() {
+        return localeSource.get();
+    }
 }

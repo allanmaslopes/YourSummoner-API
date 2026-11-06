@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,7 +54,7 @@ class ChampionCatalogTest {
     @BeforeEach
     void setUp() {
         catalog = new ChampionCatalog(repository, gameData, statistics, sync,
-                new CatalogSettings(PT_BR, Duration.ofMinutes(15)));
+                new CatalogSettings(() -> PT_BR, Duration.ofMinutes(15)));
         when(repository.findActivePatch()).thenReturn(Optional.of(ready(ACTIVE, true)));
         when(repository.findPatch(ACTIVE)).thenReturn(Optional.of(ready(ACTIVE, true)));
     }
@@ -153,6 +154,20 @@ class ChampionCatalogTest {
         assertThat(catalog.championDetail(ACTIVE, "Nobody")).isEmpty();
 
         verifyNoInteractions(gameData, sync);
+    }
+
+    @Test
+    void localeChangeDuringReadDoesNotMakeAnotherLocaleAuthoritative() {
+        AtomicReference<String> locale = new AtomicReference<>("en_US");
+        catalog = new ChampionCatalog(repository, gameData, statistics, sync,
+                new CatalogSettings(locale::get, Duration.ofMinutes(15)));
+        when(repository.findChampionDetail(ACTIVE, "en_US", "Ahri")).thenAnswer(invocation -> {
+            locale.set(PT_BR);
+            return Optional.empty();
+        });
+        when(gameData.championDetail(ACTIVE, "en_US", "Ahri")).thenReturn(Optional.of(detail()));
+
+        assertThat(catalog.championDetail(ACTIVE, "Ahri").map(ChampionDetail::id)).contains("Ahri");
     }
 
     @Test

@@ -58,7 +58,7 @@ class PatchServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PatchService(gameData, statistics, repository, new CatalogSettings(PT_BR, Duration.ofMinutes(15)));
+        service = new PatchService(gameData, statistics, repository, new CatalogSettings(() -> PT_BR, Duration.ofMinutes(15)));
         when(gameData.versions()).thenReturn(List.of(NEW, OLD));
         when(gameData.skinSplashUrl(anyString(), org.mockito.ArgumentMatchers.anyInt()))
                 .thenAnswer(i -> "splash/" + i.getArgument(0) + "_" + i.getArgument(1));
@@ -116,7 +116,7 @@ class PatchServiceTest {
         when(repository.findActivePatch()).thenReturn(Optional.of(old));
         stubChampions(NEW, "Ahri");
         ChampionCatalog catalog = new ChampionCatalog(repository, gameData, statistics, service,
-                new CatalogSettings(PT_BR, Duration.ofMinutes(15)));
+                new CatalogSettings(() -> PT_BR, Duration.ofMinutes(15)));
         List<String> seenDuringIngestion = new java.util.ArrayList<>();
         org.mockito.Mockito.doAnswer(i -> {
             seenDuringIngestion.add(catalog.activePatch());
@@ -169,7 +169,7 @@ class PatchServiceTest {
 
     @Test
     void localeSwitchIngestsActivePatchInNewLocale() {
-        service = new PatchService(gameData, statistics, repository, new CatalogSettings("en_US", Duration.ofMinutes(15)));
+        service = new PatchService(gameData, statistics, repository, new CatalogSettings(() -> "en_US", Duration.ofMinutes(15)));
         when(gameData.versions()).thenReturn(List.of(OLD));
         Patch active = patch(OLD, true, PT_BR, PatchStatus.READY);
         patches(active);
@@ -185,7 +185,7 @@ class PatchServiceTest {
 
     @Test
     void localeSwitchWithNewerPatchFailingStillIngestsActivePatch() {
-        service = new PatchService(gameData, statistics, repository, new CatalogSettings("en_US", Duration.ofMinutes(15)));
+        service = new PatchService(gameData, statistics, repository, new CatalogSettings(() -> "en_US", Duration.ofMinutes(15)));
         patches(patch(OLD, true, PT_BR, PatchStatus.READY), patch(NEW, false));
         when(gameData.champions(NEW, "en_US")).thenThrow(new ExternalServiceUnavailableException("ddragon", "down"));
         stubChampionsIn(OLD, "en_US", "Ahri");

@@ -1,7 +1,10 @@
 package com.your.summoner.infrastructure.adapter.in.scheduler;
 
 import com.your.summoner.application.port.in.SyncPatchesUseCase;
+import com.your.summoner.application.port.out.SettingsStore;
 import com.your.summoner.application.service.CatalogSettings;
+import com.your.summoner.domain.model.AppSettings;
+import com.your.summoner.domain.model.Platform;
 import com.your.summoner.infrastructure.config.CatalogConfig;
 import com.your.summoner.infrastructure.config.CatalogStartup;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class PatchSyncSchedulerTest {
 
@@ -59,10 +63,16 @@ class PatchSyncSchedulerTest {
     }
 
     @Test
-    void settingsComeFromProperties() {
+    void settingsUseStoreLocaleAndConfiguredLockDuration() {
+        SettingsStore settings = mock(SettingsStore.class);
+        when(settings.get()).thenReturn(new AppSettings("en_US", Platform.NA1));
         new ApplicationContextRunner().withUserConfiguration(CatalogConfig.class)
-                .withPropertyValues("yoursummoner.locale=en_US", "yoursummoner.patch-sync.lock-stale-after=15m")
-                .run(context -> assertThat(context.getBean(CatalogSettings.class))
-                        .isEqualTo(new CatalogSettings("en_US", Duration.ofMinutes(15))));
+                .withBean(SettingsStore.class, () -> settings)
+                .withPropertyValues("yoursummoner.locale=pt_BR", "yoursummoner.patch-sync.lock-stale-after=15m")
+                .run(context -> {
+                    CatalogSettings catalog = context.getBean(CatalogSettings.class);
+                    assertThat(catalog.locale()).isEqualTo("en_US");
+                    assertThat(catalog.lockStaleAfter()).isEqualTo(Duration.ofMinutes(15));
+                });
     }
 }
