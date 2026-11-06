@@ -130,7 +130,9 @@ class RiotAdapterErrorHandlingTest extends RiotApiWireMock {
         var e = assertThrows(ExternalBadResponseException.class, () -> invoke(endpoint));
 
         // then
-        assertTrue(e.getMessage().contains("Bad Request - Unknown apikey"), e.getMessage());
+        // The upstream body is never echoed: it is controlled by the remote side.
+        assertEquals("Riot API answered 400", e.getMessage());
+        assertFalse(e.getMessage().contains("apikey"));
         verifyRequests(1, endpoint.path());
     }
 
