@@ -25,19 +25,24 @@ public class LoginRateLimiter {
         this.clock = clock;
     }
 
-    /** Seconds until the address may try again, or empty when it is not blocked. */
-    public OptionalLong retryAfterSeconds(String ip) {
-        Window w = failures.getIfPresent(ip);
+    /** Atomically reserves an attempt, or returns the seconds until the address may try again. */
+    public OptionalLong tryAcquire(String ip) {
         Instant now = clock.instant();
-        if (w == null || w.failures() < MAX_FAILURES || !now.isBefore(w.start().plus(WINDOW))) {
-            return OptionalLong.empty();
-        }
-        return OptionalLong.of(Math.max(1, Duration.between(now, w.start().plus(WINDOW)).toSeconds() + 1));
+        long[] retryAfter = {0};
+        failures.asMap().compute(ip, (k, w) -> {
+            if (w == null || !now.isBefore(w.start().plus(WINDOW))) {
+                return new Window(1, now);
+            }
+            if (w.failures() >= MAX_FAILURES) {
+                retryAfter[0] = Math.max(1, Duration.between(now, w.start().plus(WINDOW)).toSeconds() + 1);
+                return w;
+            }
+            return new Window(w.failures() + 1, w.start());
+        });
+        return retryAfter[0] == 0 ? OptionalLong.empty() : OptionalLong.of(retryAfter[0]);
     }
 
-    public void recordFailure(String ip) {
-        Instant now = clock.instant();
-        failures.asMap().compute(ip, (k, w) -> w == null || !now.isBefore(w.start().plus(WINDOW))
-                ? new Window(1, now) : new Window(w.failures() + 1, w.start()));
+    public void release(String ip) {
+        failures.invalidate(ip);
     }
 }

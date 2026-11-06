@@ -51,20 +51,18 @@ public class ProblemDetailsHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ExternalServiceException.class)
     ResponseEntity<ProblemDetail> externalService(ExternalServiceException e) {
+        LOG.warn("External service failure: service={}, reason={}, exception={}",
+                e.service(), e.reason(), e.getClass().getSimpleName());
         return respond(switch (e.reason()) {
             case UNAVAILABLE -> {
-                LOG.warn("External service {} unavailable: {}", e.service(), e.getMessage());
                 yield problem("upstream-unavailable", e.service() + " unavailable", HttpStatus.SERVICE_UNAVAILABLE,
                         e.service() + " is temporarily unavailable");
             }
             case AUTHENTICATION -> {
-                LOG.warn("Upstream {} rejected the credentials ({}): check the RIOT_API_KEY environment variable "
-                        + "(development keys expire every 24h)", e.service(), e.getMessage());
                 yield problem("upstream-authentication", e.service() + " rejected the credentials",
                         HttpStatus.BAD_GATEWAY, "Upstream rejected the service credentials");
             }
             case BAD_RESPONSE -> {
-                LOG.warn("External service {} returned a bad response: {}", e.service(), e.getMessage());
                 yield problem("upstream-bad-response", "Unexpected response from " + e.service(),
                         HttpStatus.BAD_GATEWAY, "The upstream service returned an unexpected response");
             }

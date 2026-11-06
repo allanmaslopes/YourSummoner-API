@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutorService;
 import com.your.summoner.application.port.out.RiotCredentials;
 import com.your.summoner.application.port.out.SecretStore;
 import com.your.summoner.application.port.out.SettingsStore;
+import com.your.summoner.application.service.ChampionService;
 import com.your.summoner.application.service.CredentialService;
 import com.your.summoner.domain.model.AppSettings;
 import com.your.summoner.domain.model.Platform;
@@ -37,6 +38,7 @@ import static com.your.summoner.support.AdminFixture.USER;
 import static com.your.summoner.support.AdminFixture.freshIp;
 import static com.your.summoner.support.AdminFixture.from;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -59,6 +61,7 @@ class AdminSecurityTest {
     @Autowired SettingsStore settings;
     // Drops the post-locale-change sync: the test must not ingest a patch from the network.
     @MockitoBean(name = "adminSettingsExecutor") ExecutorService adminSettingsExecutor;
+    @MockitoBean ChampionService championService;
 
     @BeforeEach
     void cleanVault() {
@@ -70,8 +73,12 @@ class AdminSecurityTest {
 
     @Test
     void publicRoutesStayOpen() throws Exception {
+        when(championService.execute()).thenReturn("16.22.1");
         mvc.perform(get("/actuator/health").with(from("203.0.113.9"))).andExpect(status().isOk());
         mvc.perform(get("/v3/api-docs.yaml").with(from("203.0.113.9"))).andExpect(status().isOk());
+        mvc.perform(get("/champions/findVersion").with(from("203.0.113.9")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value("16.22.1"));
         // a public prefix is open to reads only
         mvc.perform(post("/champions/anything").with(from("203.0.113.9"))).andExpect(status().isUnauthorized());
         mvc.perform(get("/something-else").with(from("203.0.113.9"))).andExpect(status().isUnauthorized());
