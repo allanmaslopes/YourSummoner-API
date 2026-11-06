@@ -25,6 +25,9 @@ Cronograma de evolução da API, estruturado em fases incrementais.
 ## Fase 5 — Resiliência Avançada e Observabilidade
 - [ ] Rate limiter próprio por host da Riot.
 - [ ] Integração com OpenTelemetry e métricas avançadas (Micrometer).
+- [ ] Deadline total por operação externa (somando os 3 retries), para respeitar os 7 s da Riot e 12 s do Data Dragon do ADR 0001 (b). Achado MEDIUM da auditoria de 2026-11-06.
+- [ ] Cache Caffeine no fallback direto ao Data Dragon quando o Mongo está fora (hoje cada leitura vai ao CDN). Achado MEDIUM da auditoria de 2026-11-06.
+- [ ] Admin: impedir reuso de código TOTP dentro da janela de 90 s e rate limit compartilhado entre instâncias.
 
 ## Fase 6 — Integração Front-End
 - [ ] Homologação completa com o front-end YourSummoner-Web (Go, `html/template`).
