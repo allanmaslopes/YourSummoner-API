@@ -59,6 +59,12 @@ yoursummoner:
     cron: "0 0 * * * *"
     enabled: true
     lock-stale-after: 15m
+  # Admin area and secret vault (docs/admin.md). Empty values keep the admin area off (503).
+  master-key: ${YOURSUMMONER_MASTER_KEY:}
+  admin:
+    user: ${YOURSUMMONER_ADMIN_USER:}
+    password-hash: ${YOURSUMMONER_ADMIN_PASSWORD_HASH:}
+    allowed-cidrs: 127.0.0.1/32,::1/128
 
 springdoc:
   swagger-ui:
