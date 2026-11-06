@@ -1,0 +1,1563 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "description" : "API que consome a Riot Games API, o Data Dragon e o Community Dragon.",
+    "title" : "YourSummoner-API",
+    "version" : "3.0.0"
+  },
+  "servers" : [ {
+    "url" : "/your-summoner"
+  } ],
+  "tags" : [ {
+    "description" : "Perfil público dos invocadores da Riot Games API.",
+    "name" : "Summoners"
+  }, {
+    "description" : "Campeões do Data Dragon e maestrias e lanes dos jogadores na Riot API.",
+    "name" : "Champions"
+  }, {
+    "description" : "Partidas do jogador: ids, histórico com performance e detalhe da partida.",
+    "name" : "Matches"
+  }, {
+    "description" : "Patches do Data Dragon conhecidos pela API e o estado da ingestão de cada um.",
+    "name" : "Patches"
+  } ],
+  "paths" : {
+    "/champions/by-mastery/{nick}/{tag}" : {
+      "get" : {
+        "operationId" : "byMastery",
+        "parameters" : [ {
+          "description" : "Nome do invocador (parte antes do #)",
+          "in" : "path",
+          "name" : "nick",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Tag do invocador (parte depois do #)",
+          "in" : "path",
+          "name" : "tag",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Plataforma da Riot (BR1, NA1, EUW1, KR...). Padrão: BR1",
+          "in" : "query",
+          "name" : "platform",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Patch do catálogo (ex.: 16.21.1). Padrão: patch ativo. Patch desconhecido responde 404",
+          "in" : "query",
+          "name" : "patch",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Maestrias do jogador, ordenadas por pontos"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Entrada inválida"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Rate limit da Riot (header Retry-After)"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Todas as maestrias do jogador, por pontos",
+        "tags" : [ "Champions" ]
+      }
+    },
+    "/champions/find-champion/{championName}" : {
+      "get" : {
+        "operationId" : "champion",
+        "parameters" : [ {
+          "description" : "Id do campeão no Data Dragon (ex.: Aatrox) ou nome, sem diferenciar caixa",
+          "in" : "path",
+          "name" : "championName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Patch do catálogo (ex.: 16.21.1). Padrão: patch ativo. Patch desconhecido responde 404",
+          "in" : "query",
+          "name" : "patch",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChampionDetailResponse"
+                }
+              }
+            },
+            "description" : "Ficha do campeão"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChampionDetailResponse"
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChampionDetailResponse"
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChampionDetailResponse"
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Ficha do campeão (id do Data Dragon ou nome, sem diferenciar caixa)",
+        "tags" : [ "Champions" ]
+      }
+    },
+    "/champions/findVersion" : {
+      "get" : {
+        "operationId" : "version",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionResponse"
+                }
+              }
+            },
+            "description" : "Versão atual do Data Dragon"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionResponse"
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionResponse"
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Patch atual do Data Dragon",
+        "tags" : [ "Champions" ]
+      }
+    },
+    "/champions/summoner/{nick}/tag/{tag}/lane/{lane}" : {
+      "get" : {
+        "operationId" : "byLane",
+        "parameters" : [ {
+          "description" : "Nome do invocador (parte antes do #)",
+          "in" : "path",
+          "name" : "nick",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Tag do invocador (parte depois do #)",
+          "in" : "path",
+          "name" : "tag",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Lane: TOP, JUNGLE, MIDDLE, BOTTOM ou SUPPORT (aceita apelidos como mid, adc, sup)",
+          "in" : "path",
+          "name" : "lane",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        }, {
+          "description" : "Plataforma da Riot (BR1, NA1, EUW1, KR...). Padrão: BR1",
+          "in" : "query",
+          "name" : "platform",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Patch do catálogo (ex.: 16.21.1). Padrão: patch ativo. Patch desconhecido responde 404",
+          "in" : "query",
+          "name" : "patch",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Campeões do jogador na lane, com o pick rate global"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Entrada inválida"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Rate limit da Riot (header Retry-After)"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionMasteryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Campeões do jogador jogados na lane, com o pick rate global",
+        "tags" : [ "Champions" ]
+      }
+    },
+    "/champions/{championName}/skins" : {
+      "get" : {
+        "operationId" : "skins",
+        "parameters" : [ {
+          "description" : "Id do campeão no Data Dragon (ex.: Aatrox) ou nome, sem diferenciar caixa",
+          "in" : "path",
+          "name" : "championName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Patch do catálogo (ex.: 16.21.1). Padrão: patch ativo. Patch desconhecido responde 404",
+          "in" : "query",
+          "name" : "patch",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionSkinResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Skins do campeão"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionSkinResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Campeão ou patch não encontrado"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionSkinResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChampionSkinResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Skins do campeão no patch, com as URLs de splash e loading",
+        "tags" : [ "Champions" ]
+      }
+    },
+    "/matchs/matchId/{matchId}" : {
+      "get" : {
+        "operationId" : "match",
+        "parameters" : [ {
+          "description" : "Id da partida no formato PLATAFORMA_NUMERO (ex.: BR1_1234567890)",
+          "in" : "path",
+          "name" : "matchId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description" : "Detalhe da partida"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description" : "Entrada inválida"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description" : "Rate limit da Riot (header Retry-After)"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Detalhe da partida; a região vem do prefixo do id (BR1_..., KR_...)",
+        "tags" : [ "Matches" ]
+      }
+    },
+    "/matchs/{nick}/{tag}" : {
+      "get" : {
+        "operationId" : "matchIds",
+        "parameters" : [ {
+          "description" : "Nome do invocador (parte antes do #)",
+          "in" : "path",
+          "name" : "nick",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Tag do invocador (parte depois do #)",
+          "in" : "path",
+          "name" : "tag",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Quantidade de ids (0 a 100)",
+          "in" : "query",
+          "name" : "quantity",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 0
+          }
+        }, {
+          "description" : "Início do intervalo (timestamp Unix em segundos)",
+          "in" : "query",
+          "name" : "startTime",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "description" : "Fim do intervalo (timestamp Unix em segundos)",
+          "in" : "query",
+          "name" : "endTime",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "description" : "Id da fila (queueId da Riot)",
+          "in" : "query",
+          "name" : "queue",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Tipo da partida: ranked, normal, tourney ou tutorial",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Índice do primeiro resultado (0 ou maior)",
+          "in" : "query",
+          "name" : "start",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0
+          }
+        }, {
+          "description" : "Plataforma da Riot (BR1, NA1, EUW1, KR...). Padrão: BR1",
+          "in" : "query",
+          "name" : "platform",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "Ids das partidas do jogador"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "Entrada inválida"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "Rate limit da Riot (header Retry-After)"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Ids das partidas do jogador (match-v5)",
+        "tags" : [ "Matches" ]
+      }
+    },
+    "/matchs/{nick}/{tag}/history" : {
+      "get" : {
+        "operationId" : "history",
+        "parameters" : [ {
+          "description" : "Nome do invocador (parte antes do #)",
+          "in" : "path",
+          "name" : "nick",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Tag do invocador (parte depois do #)",
+          "in" : "path",
+          "name" : "tag",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Quantidade de partidas (1 a 100). Padrão: 20",
+          "in" : "query",
+          "name" : "quantity",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        }, {
+          "description" : "Id da fila (queueId da Riot)",
+          "in" : "query",
+          "name" : "queue",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Tipo da partida: ranked, normal, tourney ou tutorial",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Índice do primeiro resultado (0 ou maior)",
+          "in" : "query",
+          "name" : "start",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0
+          }
+        }, {
+          "description" : "Plataforma da Riot (BR1, NA1, EUW1, KR...). Padrão: BR1",
+          "in" : "query",
+          "name" : "platform",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MatchHistoryEntryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Últimas partidas do jogador com o resumo de performance"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MatchHistoryEntryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Entrada inválida"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MatchHistoryEntryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MatchHistoryEntryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Rate limit da Riot (header Retry-After)"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MatchHistoryEntryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MatchHistoryEntryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Últimas partidas do jogador com o resumo da performance dele (1 a 100, padrão 20)",
+        "tags" : [ "Matches" ]
+      }
+    },
+    "/patches" : {
+      "get" : {
+        "operationId" : "patches",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatchResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Patches conhecidos"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatchResponse"
+                  }
+                }
+              }
+            },
+            "description" : "Armazenamento do catálogo indisponível"
+          }
+        },
+        "summary" : "Patches conhecidos, do mais novo para o mais antigo, com o ativo e o status por locale",
+        "tags" : [ "Patches" ]
+      }
+    },
+    "/summoners/{nick}/{tag}" : {
+      "get" : {
+        "operationId" : "profile",
+        "parameters" : [ {
+          "description" : "Nome do invocador (parte antes do #)",
+          "in" : "path",
+          "name" : "nick",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Tag do invocador (parte depois do #)",
+          "in" : "path",
+          "name" : "tag",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Plataforma da Riot (BR1, NA1, EUW1, KR...). Padrão: BR1",
+          "in" : "query",
+          "name" : "platform",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SummonerProfileResponse"
+                }
+              }
+            },
+            "description" : "Perfil do invocador"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SummonerProfileResponse"
+                }
+              }
+            },
+            "description" : "Entrada inválida"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SummonerProfileResponse"
+                }
+              }
+            },
+            "description" : "Não encontrado"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SummonerProfileResponse"
+                }
+              }
+            },
+            "description" : "Rate limit da Riot (header Retry-After)"
+          },
+          "502" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SummonerProfileResponse"
+                }
+              }
+            },
+            "description" : "Credencial rejeitada ou resposta inválida do upstream"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SummonerProfileResponse"
+                }
+              }
+            },
+            "description" : "Upstream indisponível ou circuito aberto"
+          }
+        },
+        "summary" : "Perfil do invocador: nível, ícone, ranqueadas e 3 campeões principais",
+        "tags" : [ "Summoners" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ChampionDetailResponse" : {
+        "type" : "object",
+        "properties" : {
+          "allyTips" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "enemyTips" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "info" : {
+            "$ref" : "#/components/schemas/Info"
+          },
+          "key" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lore" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "partype" : {
+            "type" : "string"
+          },
+          "passive" : {
+            "$ref" : "#/components/schemas/Passive"
+          },
+          "skins" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Skin"
+            }
+          },
+          "spells" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Spell"
+            }
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "urlIcon" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ChampionMasteryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "championName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastPlayTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "masteryLevel" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "masteryPoints" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pickRate" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ChampionSkinResponse" : {
+        "type" : "object",
+        "properties" : {
+          "championId" : {
+            "type" : "string"
+          },
+          "loadingUrl" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "num" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "skinId" : {
+            "type" : "string"
+          },
+          "splashUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Info" : {
+        "type" : "object",
+        "properties" : {
+          "attack" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "defense" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "difficulty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "magic" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "MainChampionResponse" : {
+        "type" : "object",
+        "properties" : {
+          "championName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "masteryLevel" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "masteryPoints" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "urlIcon" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MatchHistoryEntryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "assists" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "champLevel" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "championId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "championName" : {
+            "type" : "string"
+          },
+          "deaths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "gameCreation" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "gameDuration" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "gameMode" : {
+            "type" : "string"
+          },
+          "goldEarned" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "kda" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "kills" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "matchId" : {
+            "type" : "string"
+          },
+          "queueId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teamPosition" : {
+            "type" : "string"
+          },
+          "totalMinionsKilled" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "visionScore" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "win" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "MatchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "gameCreation" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "gameDuration" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "gameMode" : {
+            "type" : "string"
+          },
+          "gameType" : {
+            "type" : "string"
+          },
+          "gameVersion" : {
+            "type" : "string"
+          },
+          "mapId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "matchId" : {
+            "type" : "string"
+          },
+          "participants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Participant"
+            }
+          },
+          "platformId" : {
+            "type" : "string"
+          },
+          "queueId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teams" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Team"
+            }
+          }
+        }
+      },
+      "Participant" : {
+        "type" : "object",
+        "properties" : {
+          "assists" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "champLevel" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "championId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "championName" : {
+            "type" : "string"
+          },
+          "deaths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "goldEarned" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "kda" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "kills" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "neutralMinionsKilled" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "playerSubteamId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "puuid" : {
+            "type" : "string"
+          },
+          "riotIdGameName" : {
+            "type" : "string"
+          },
+          "riotIdTagline" : {
+            "type" : "string"
+          },
+          "subteamPlacement" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "summoner1Id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "summoner2Id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teamId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teamPosition" : {
+            "type" : "string"
+          },
+          "totalDamageDealtToChampions" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalMinionsKilled" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "visionScore" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "win" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Passive" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "active" : {
+            "type" : "boolean"
+          },
+          "statusByLocale" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Ranking" : {
+        "type" : "object",
+        "properties" : {
+          "hotStreak" : {
+            "type" : "boolean"
+          },
+          "leaguePoints" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "losses" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "quantMatchs" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "queueType" : {
+            "type" : "string"
+          },
+          "rank" : {
+            "type" : "string"
+          },
+          "tier" : {
+            "type" : "string"
+          },
+          "winRate" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "wins" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "Skin" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "num" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "Spell" : {
+        "type" : "object",
+        "properties" : {
+          "cooldown" : {
+            "type" : "string"
+          },
+          "cost" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SummonerProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "level" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "mainChampionList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MainChampionResponse"
+            }
+          },
+          "puuid" : {
+            "type" : "string"
+          },
+          "rankingList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Ranking"
+            }
+          },
+          "summonerName" : {
+            "type" : "string"
+          },
+          "tagLine" : {
+            "type" : "string"
+          },
+          "urlIcon" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Team" : {
+        "type" : "object",
+        "properties" : {
+          "bannedChampionIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "baronKills" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "championKills" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dragonKills" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teamId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "towerKills" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "win" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "VersionResponse" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string"
+          }
+        }
+      }
+    }
+  }
+}

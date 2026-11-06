@@ -67,6 +67,7 @@ yoursummoner:
     allowed-cidrs: 127.0.0.1/32,::1/128
 
 springdoc:
+  writer-with-order-by-keys: true
   swagger-ui:
     path: /swagger-ui.html
   info:
