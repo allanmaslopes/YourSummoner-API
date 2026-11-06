@@ -51,19 +51,19 @@ public class MongoStaticDataRepository implements StaticDataRepository {
     }
 
     @Override
-    public synchronized List<Patch> findAllPatches() {
+    public List<Patch> findAllPatches() {
         return mongoTemplate.find(new Query().with(Sort.by("order")), PatchDocument.class).stream()
                 .map(mapper::toPatch).toList();
     }
 
     @Override
-    public synchronized Optional<Patch> findPatch(String version) {
+    public Optional<Patch> findPatch(String version) {
         return Optional.ofNullable(mongoTemplate.findOne(patchQuery(version), PatchDocument.class))
                 .map(mapper::toPatch);
     }
 
     @Override
-    public synchronized Optional<Patch> findActivePatch() {
+    public Optional<Patch> findActivePatch() {
         return Optional.ofNullable(cached(activePatchCache, "active", () -> mongoTemplate.findOne(
                 Query.query(Criteria.where("active").is(true)), PatchDocument.class), Objects::nonNull))
                 .map(mapper::toPatch);
