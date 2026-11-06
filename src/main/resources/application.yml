@@ -1,0 +1,44 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /your-summoner
+  compression:
+    enabled: true
+  error:
+    include-stacktrace: never
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://127.0.0.1:27017/yoursummoner}
+  mvc:
+    problemdetails:
+      enabled: true
+
+riot:
+  api:
+    token: ${RIOT_API_KEY:}
+    base-url-template: https://{host}.api.riotgames.com
+    connect-timeout: 2s
+    read-timeout: 4s
+
+yoursummoner:
+  default-platform: BR1
+  locale: pt_BR
+  patch-sync:
+    cron: "0 0 * * * *"
+    enabled: true
+    lock-stale-after: 15m
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  info:
+    title: YourSummoner-API
+    version: 3.0.0
+
+logging:
+  level:
+    com.your.summoner: INFO

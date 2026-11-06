@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set TMP=C:\\Temp\\t&& set TEMP=C:\\Temp\\t&& mvn quarkus:dev -Dquarkus.console.enabled=false"],
+      "port": 8080
+    },
+    {
+      "name": "riot-mock",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [".claude/riot-mock.py"],
+      "port": 8089
+    },
+    {
+      "name": "api-mock",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set TMP=C:\\Temp\\t&& set TEMP=C:\\Temp\\t&& mvn quarkus:dev -Dquarkus.console.enabled=false -Driot.api.base-url-template=http://localhost:8089/riot/{host}"],
+      "port": 8080
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d D:\\Workspace\\YourSummoner-Web && go run ."],
+      "port": 3000
+    }
+  ]
+}
