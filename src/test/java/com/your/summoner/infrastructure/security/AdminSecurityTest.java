@@ -1,7 +1,7 @@
 package com.your.summoner.infrastructure.security;
 
 import com.jayway.jsonpath.JsonPath;
-import com.your.summoner.application.port.in.SyncPatchesUseCase;
+import java.util.concurrent.ExecutorService;
 import com.your.summoner.application.port.out.RiotCredentials;
 import com.your.summoner.application.port.out.SecretStore;
 import com.your.summoner.application.port.out.SettingsStore;
@@ -57,7 +57,8 @@ class AdminSecurityTest {
     @Autowired MongoTemplate mongo;
     @Autowired RiotCredentials credentials;
     @Autowired SettingsStore settings;
-    @MockitoBean SyncPatchesUseCase sync;
+    // Drops the post-locale-change sync: the test must not ingest a patch from the network.
+    @MockitoBean(name = "adminSettingsExecutor") ExecutorService adminSettingsExecutor;
 
     @BeforeEach
     void cleanVault() {

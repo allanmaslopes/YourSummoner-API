@@ -31,12 +31,13 @@ public class AdminService implements ManageSecretsUseCase, ManageSettingsUseCase
     private final Executor executor;
 
     public AdminService(SecretStore secrets, SettingsStore settings, AuditLog audit,
-                        SyncPatchesUseCase sync, Executor executor) {
+                        SyncPatchesUseCase sync, Executor adminSettingsExecutor) {
         this.secrets = secrets;
         this.settings = settings;
         this.audit = audit;
         this.sync = sync;
-        this.executor = executor;
+        // Resolved by parameter name: the context also has the scheduler executor.
+        this.executor = adminSettingsExecutor;
     }
 
     @Override
