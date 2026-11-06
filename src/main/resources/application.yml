@@ -28,6 +28,30 @@ riot:
     connect-timeout: 2s
     read-timeout: 4s
 
+ddragon:
+  url: https://ddragon.leagueoflegends.com
+
+cdragon:
+  url: https://raw.communitydragon.org
+
+resilience4j:
+  retry:
+    instances:
+      ddragon:
+        max-attempts: 3
+        wait-duration: 250ms
+        retry-exception-predicate: com.your.summoner.infrastructure.adapter.out.RetryableFailure
+      cdragon:
+        max-attempts: 3
+        wait-duration: 250ms
+        retry-exception-predicate: com.your.summoner.infrastructure.adapter.out.RetryableFailure
+  circuitbreaker:
+    instances:
+      ddragon:
+        record-exception-predicate: com.your.summoner.infrastructure.adapter.out.RetryableFailure
+      cdragon:
+        record-exception-predicate: com.your.summoner.infrastructure.adapter.out.RetryableFailure
+
 yoursummoner:
   default-platform: BR1
   locale: pt_BR
