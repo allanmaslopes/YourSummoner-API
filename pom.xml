@@ -192,6 +192,10 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <!-- Windows: sem isso o NIO do JDK falha com "Unable to establish loopback connection" -->
+          <jvmArguments>-Djdk.net.unixdomain.tmpdir=${project.build.directory}</jvmArguments>
+        </configuration>
       </plugin>
     </plugins>
   </build>
