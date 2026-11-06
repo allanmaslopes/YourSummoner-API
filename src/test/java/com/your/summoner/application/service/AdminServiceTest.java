@@ -1,5 +1,6 @@
 package com.your.summoner.application.service;
 
+import com.your.summoner.application.port.in.SyncPatchesUseCase;
 import com.your.summoner.application.port.out.AuditLog;
 import com.your.summoner.application.port.out.SettingsStore;
 import com.your.summoner.domain.exception.InvalidInputException;
@@ -15,15 +16,22 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class AdminServiceTest {
     private final CredentialServiceTest.MemoryStore secrets = new CredentialServiceTest.MemoryStore();
     private final List<AuditEntry> entries = new ArrayList<>();
     private final List<Integer> requestedLimits = new ArrayList<>();
     private AppSettings stored = new AppSettings("pt_BR", Platform.BR1);
+    private final SyncPatchesUseCase sync = mock(SyncPatchesUseCase.class);
     private AdminService service;
 
     @BeforeEach
@@ -62,7 +70,7 @@ class AdminServiceTest {
             public void put(SecretName name, String value, String actor) {
                 secrets.put(name, value, actor);
             }
-        }, settings, audit);
+        }, settings, audit, sync, Runnable::run);
     }
 
     @Test
@@ -96,6 +104,42 @@ class AdminServiceTest {
     void settingsPutIsStoredAndAudited() {
         service.put(new AppSettings("en_US", Platform.NA1), "admin", "127.0.0.1");
         assertEquals(new AppSettings("en_US", Platform.NA1), service.get());
+        assertEquals("settings.update", entries.get(0).action());
+    }
+
+    @Test
+    void localeChangeTriggersSync() {
+        AppSettings updated = new AppSettings("en_US", Platform.NA1);
+        doAnswer(invocation -> {
+            assertEquals(updated, service.get());
+            return null;
+        }).when(sync).syncLatest();
+
+        service.put(updated, "admin", "127.0.0.1");
+
+        verify(sync).syncLatest();
+        assertEquals(updated, service.get());
+    }
+
+    @Test
+    void sameLocaleDoesNotTriggerSync() {
+        AppSettings updated = new AppSettings("pt_BR", Platform.NA1);
+
+        service.put(updated, "admin", "127.0.0.1");
+
+        assertEquals(updated, service.get());
+        verifyNoInteractions(sync);
+    }
+
+    @Test
+    void syncFailureIsSwallowed() {
+        AppSettings updated = new AppSettings("en_US", Platform.NA1);
+        doThrow(new IllegalStateException("Data Dragon unavailable")).when(sync).syncLatest();
+
+        assertDoesNotThrow(() -> service.put(updated, "admin", "127.0.0.1"));
+
+        verify(sync).syncLatest();
+        assertEquals(updated, service.get());
         assertEquals("settings.update", entries.get(0).action());
     }
 

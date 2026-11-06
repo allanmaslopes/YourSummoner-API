@@ -1,9 +1,13 @@
 package com.your.summoner.infrastructure.security;
 
 import com.jayway.jsonpath.JsonPath;
+import com.your.summoner.application.port.in.SyncPatchesUseCase;
 import com.your.summoner.application.port.out.RiotCredentials;
 import com.your.summoner.application.port.out.SecretStore;
+import com.your.summoner.application.port.out.SettingsStore;
 import com.your.summoner.application.service.CredentialService;
+import com.your.summoner.domain.model.AppSettings;
+import com.your.summoner.domain.model.Platform;
 import com.your.summoner.support.AdminFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +23,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -51,12 +56,15 @@ class AdminSecurityTest {
     @Autowired SecretStore secrets;
     @Autowired MongoTemplate mongo;
     @Autowired RiotCredentials credentials;
+    @Autowired SettingsStore settings;
+    @MockitoBean SyncPatchesUseCase sync;
 
     @BeforeEach
     void cleanVault() {
         mongo.dropCollection("secrets");
         mongo.dropCollection("admin_audit");
         mongo.dropCollection("app_settings");
+        settings.put(new AppSettings("pt_BR", Platform.BR1), USER);
     }
 
     @Test

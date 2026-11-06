@@ -82,19 +82,19 @@ public class ChampionCatalog {
 
     public Map<Long, Champion> champions(String patch) {
         String locale = settings.locale();
-        return read(patch, () -> repository.findChampions(patch, locale), Map::isEmpty,
+        return read(patch, locale, () -> repository.findChampions(patch, locale), Map::isEmpty,
                 () -> gameData.champions(patch, locale));
     }
 
     public Optional<ChampionDetail> championDetail(String patch, String championId) {
         String locale = settings.locale();
-        return read(patch, () -> repository.findChampionDetail(patch, locale, championId), Optional::isEmpty,
+        return read(patch, locale, () -> repository.findChampionDetail(patch, locale, championId), Optional::isEmpty,
                 () -> gameData.championDetail(patch, locale, championId));
     }
 
     public List<ChampionSkin> skins(String patch, String championId) {
         String locale = settings.locale();
-        return read(patch, () -> repository.findSkins(patch, locale, championId), List::isEmpty,
+        return read(patch, locale, () -> repository.findSkins(patch, locale, championId), List::isEmpty,
                 () -> gameData.championDetail(patch, locale, championId)
                         .map(detail -> Skins.of(gameData, detail)).orElse(List.of()));
     }
@@ -128,7 +128,7 @@ public class ChampionCatalog {
      * Vazio e patch conhecido mas não pronto → ingere sob demanda e lê de novo. Mongo fora, patch
      * desconhecido ou ingestão travada por outra instância → leitura direta do Data Dragon.
      */
-    private <T> T read(String patch, Supplier<T> fromStore, Predicate<T> isEmpty, Supplier<T> direct) {
+    private <T> T read(String patch, String locale, Supplier<T> fromStore, Predicate<T> isEmpty, Supplier<T> direct) {
         try {
             T value = fromStore.get();
             if (!isEmpty.test(value)) {
@@ -136,7 +136,7 @@ public class ChampionCatalog {
             }
             Optional<Patch> known = repository.findPatch(patch);
             if (known.isPresent()) {
-                if (known.get().isReady(settings.locale())) {
+                if (known.get().isReady(locale)) {
                     return value;
                 }
                 sync.ingest(patch);

@@ -2,6 +2,7 @@ package com.your.summoner.application.service;
 
 import com.your.summoner.application.port.in.ManageSecretsUseCase;
 import com.your.summoner.application.port.in.ManageSettingsUseCase;
+import com.your.summoner.application.port.in.SyncPatchesUseCase;
 import com.your.summoner.application.port.in.ViewAuditUseCase;
 import com.your.summoner.application.port.out.AuditLog;
 import com.your.summoner.application.port.out.SecretStore;
@@ -11,22 +12,31 @@ import com.your.summoner.domain.model.AppSettings;
 import com.your.summoner.domain.model.AuditEntry;
 import com.your.summoner.domain.model.SecretMetadata;
 import com.your.summoner.domain.model.SecretName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 
 @Service
 public class AdminService implements ManageSecretsUseCase, ManageSettingsUseCase, ViewAuditUseCase {
+    private static final Logger LOG = LoggerFactory.getLogger(AdminService.class);
     private static final int MAX_SECRET_LENGTH = 256;
 
     private final SecretStore secrets;
     private final SettingsStore settings;
     private final AuditLog audit;
+    private final SyncPatchesUseCase sync;
+    private final Executor executor;
 
-    public AdminService(SecretStore secrets, SettingsStore settings, AuditLog audit) {
+    public AdminService(SecretStore secrets, SettingsStore settings, AuditLog audit,
+                        SyncPatchesUseCase sync, Executor executor) {
         this.secrets = secrets;
         this.settings = settings;
         this.audit = audit;
+        this.sync = sync;
+        this.executor = executor;
     }
 
     @Override
@@ -55,8 +65,22 @@ public class AdminService implements ManageSecretsUseCase, ManageSettingsUseCase
 
     @Override
     public void put(AppSettings newSettings, String actor, String ip) {
+        AppSettings previous = settings.get();
         settings.put(newSettings, actor);
         audit.record(actor, "settings.update", "settings", ip);
+        if (!previous.locale().equals(newSettings.locale())) {
+            try {
+                executor.execute(() -> {
+                    try {
+                        sync.syncLatest();
+                    } catch (Exception e) {
+                        LOG.warn("Catalog sync after locale change failed ({})", e.getClass().getSimpleName());
+                    }
+                });
+            } catch (RuntimeException e) {
+                LOG.warn("Catalog sync after locale change could not be scheduled ({})", e.getClass().getSimpleName());
+            }
+        }
     }
 
     @Override

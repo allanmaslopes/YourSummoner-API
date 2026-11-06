@@ -16,9 +16,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.time.Clock;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Configuration(proxyBeanMethods = false)
 public class AdminConfig {
+
+    @Bean(destroyMethod = "close")
+    ExecutorService adminSettingsExecutor() {
+        return Executors.newVirtualThreadPerTaskExecutor();
+    }
 
     /** Fails the startup (without printing the key) when the value is set but invalid. */
     @Bean
