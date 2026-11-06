@@ -8,6 +8,10 @@ server:
     include-stacktrace: never
 
 spring:
+  jackson:
+    deserialization:
+      # Riot omits fields at times; Jackson 3 would otherwise reject a missing primitive.
+      fail-on-null-for-primitives: false
   threads:
     virtual:
       enabled: true
