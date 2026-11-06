@@ -171,3 +171,39 @@ Revise estas:
 ## 11. O que fica com o builder
 
 Nomes exatos de classes e pacotes novos, versão exata das dependências, formato dos documentos Mongo além das chaves, estrutura interna de `docs/lol/`, ordem das tarefas dentro de cada fase.
+
+## 12. Administração de parâmetros e segredos (adendo de 2026-11-06, entra nesta entrega)
+
+O usuário quer cadastrar chaves de API e parâmetros numa tela de administrador, sem editar código nem `.env`, mantendo a aplicação segura. Pedido explícito: entra agora, não no roadmap.
+
+### 12.1 O que é administrável
+
+- **Segredos:** começa com `RIOT_API_KEY`. Novos segredos entram como novos valores de um enum `SecretName`.
+- **Parâmetros:** `locale` e `defaultPlatform`. Valem a quente, sem reiniciar. O `cron` do patch continua no `application.yml` (call do arquiteto: reagendar cron em tempo de execução não compensa agora).
+
+### 12.2 Regras de segurança
+
+- Segredos ficam na coleção `secrets`, **sempre criptografados** com AES-256-GCM (IV aleatório por gravação). A chave mestra vem só de `YOURSUMMONER_MASTER_KEY` (32 bytes em Base64), nunca do banco. Sem chave mestra, a área de admin fica desligada e a API usa só as variáveis de ambiente.
+- A API **nunca devolve** o valor de um segredo. Só nome, 4 últimos caracteres, data e autor da última troca.
+- Precedência da chave da Riot: valor do cofre, se existir; senão `RIOT_API_KEY`. A troca vale na próxima chamada, sem reiniciar.
+- Acesso: Spring Security. As rotas públicas atuais continuam abertas. `/admin/**` exige papel `ADMIN`.
+- Login: `POST /admin/session` com usuário, senha e código TOTP (2FA). Responde um JWT curto (15 min, HS256, chave derivada da chave mestra). As demais rotas `/admin/**` exigem `Authorization: Bearer`.
+- Usuário admin único, definido por `YOURSUMMONER_ADMIN_USER` e `YOURSUMMONER_ADMIN_PASSWORD_HASH` (BCrypt). O segredo TOTP é gerado no primeiro login bem-sucedido, devolvido uma única vez como `otpauth://` e gravado criptografado; dali em diante o código é obrigatório.
+- Rate limit no login: 5 tentativas por 15 min por IP. Falhas viram 401 genérico, sem dizer qual campo errou.
+- Por padrão, `/admin/**` só aceita requisição de `127.0.0.1`/`::1` (`yoursummoner.admin.allowed-cidrs`).
+- Auditoria na coleção `admin_audit`: quem, quando, o quê, IP. Nunca o valor.
+- Teste garante que nenhum segredo aparece em log, resposta, `toString` ou mensagem de erro.
+
+### 12.3 Hexagonal
+
+- `domain`: `SecretName`, `SecretMetadata`, `AppSettings`.
+- `application`: ports de saída `SecretStore`, `SettingsStore`, `AuditLog`; port `RiotCredentials` (`Optional<String> riotApiKey()`), usado pelo interceptor do Feign; `CredentialService` (cofre com fallback para o ambiente); casos de uso `ManageSecretsUseCase`, `ManageSettingsUseCase`.
+- `infrastructure`: adapter Mongo que criptografa ao gravar e decifra ao ler (`AesGcmCipher`), Spring Security, controller `/admin/**`, bean de fallback `EnvRiotCredentials` (só a variável de ambiente) enquanto o cofre não existir.
+
+### 12.4 Tela
+
+A tela fica no `YourSummoner-Web` (Go, `html/template`), em `/admin`: login com TOTP, lista de segredos (mascarados) com campo só de gravação, edição de `locale` e `defaultPlatform`, e o log de auditoria. O JWT fica num cookie `HttpOnly`, `SameSite=Strict`, e o formulário tem token CSRF. O Web chama a API; nunca guarda segredo.
+
+### 12.5 Fora desta entrega (roadmap)
+
+Cofre externo (Vault/Infisical), vários usuários admin e papéis, rotação automática da chave mestra.

@@ -92,6 +92,8 @@
 **Interfaces:**
 - Consumes: domínio (Task 2).
 - Produces: beans de `AccountProvider`, `SummonerProvider`, `LeagueProvider`, `ChampionMasteryProvider`, `MatchProvider` com as assinaturas da referência.
+- Produces: `application/port/out/RiotCredentials.java` = `public interface RiotCredentials { Optional<String> riotApiKey(); }`, lido pelo interceptor do Feign **a cada requisição** (a chave pode mudar a quente pela Task 12). Bean de fallback `infrastructure/config/EnvRiotCredentials` (`@ConditionalOnMissingBean(RiotCredentials.class)`), que devolve `riot.api.token` se não vazio.
+- Já existem no repositório (não recrie): `infrastructure/adapter/out/{ExternalCalls,CachedCalls,RetryableFailure,UpstreamNotFoundException}.java`.
 
 - [ ] **Step 1:** Portar os 3 testes. Adicionar `requestsCarryTestKeyOnly`: todo request recebido pelo WireMock tem `X-Riot-Token: test-key`.
 - [ ] **Step 2:** Rodar. Esperado: FAIL.
@@ -282,6 +284,46 @@
 - [ ] **Step 3:** Subir com `mongod --dbpath ... --bind_ip 127.0.0.1 --port 27017`. Sem serviço do Windows e sem PATH global.
 - [ ] **Step 4:** Verificar: `mongosh --eval "db.runCommand({ping:1})"` → `{ ok: 1 }`.
 
+### Task 12: Administração de segredos e parâmetros (API)
+
+**Delegado:** Codex `gpt-5.6-sol`; o Opus revisa toda a parte de segurança.
+
+**Files:**
+- Create em `domain/model/`: `SecretName` (`enum { RIOT_API_KEY }`), `SecretMetadata(SecretName name, String last4, Instant updatedAt, String updatedBy)` (sem o valor; `toString` padrão do record é seguro), `AppSettings(String locale, Platform defaultPlatform)`.
+- Create em `application/port/out/`: `SecretStore`, `SettingsStore`, `AuditLog`. Em `application/port/in/`: `ManageSecretsUseCase`, `ManageSettingsUseCase`. Em `application/service/`: `CredentialService implements RiotCredentials`, `AdminService implements ManageSecretsUseCase, ManageSettingsUseCase`.
+- Create em `infrastructure/adapter/out/mongo/`: `SecretDocument`, `SettingsDocument`, `AuditDocument`, `MongoSecretStore`, `MongoSettingsStore`, `MongoAuditLog`; em `infrastructure/security/`: `AesGcmCipher`, `MasterKey` (lê `YOURSUMMONER_MASTER_KEY`), `SecurityConfig`, `AdminAuthService` (BCrypt + TOTP + JWT), `LoginRateLimiter`; em `infrastructure/adapter/in/rest/admin/`: `AdminSessionController`, `AdminSecretsController`, `AdminSettingsController`, `AdminAuditController` + DTOs.
+- Modify: `pom.xml` (`spring-boot-starter-security`, `spring-boot-starter-oauth2-resource-server` para validar o JWT, uma lib TOTP pequena como `dev.samstevens.totp:totp`), `application.yml` (`yoursummoner.admin.allowed-cidrs: 127.0.0.1/32,::1/128`, `yoursummoner.admin.user: ${YOURSUMMONER_ADMIN_USER:}`, `yoursummoner.admin.password-hash: ${YOURSUMMONER_ADMIN_PASSWORD_HASH:}`, `yoursummoner.master-key: ${YOURSUMMONER_MASTER_KEY:}`).
+- Modify: `ChampionCatalog`/`CatalogSettings` (Task 7) e `PlatformResolver` (Task 8) para ler `locale` e `defaultPlatform` do `SettingsStore` a cada uso, com o `application.yml` como valor inicial.
+- Test: `AesGcmCipherTest`, `CredentialServiceTest`, `AdminServiceTest`, `AdminSecurityTest` (MockMvc), `SecretLeakTest`.
+
+**Interfaces:**
+- `SecretStore { Optional<String> find(SecretName name); void put(SecretName name, String value, String actor); List<SecretMetadata> list(); }`
+- `SettingsStore { AppSettings get(); void put(AppSettings settings, String actor); }`
+- `AuditLog { void record(String actor, String action, String target, String ip); List<AuditEntry> recent(int limit); }` com `record AuditEntry(String actor, String action, String target, String ip, Instant at)` em `domain/model`.
+- REST: `POST /admin/session` `{user, password, totp}` → `{token, expiresAt}` ou, no primeiro login, `{token, expiresAt, totpEnrollmentUri}`; `GET /admin/secrets` → lista de `SecretMetadata`; `PUT /admin/secrets/{name}` `{value}` → 204; `GET/PUT /admin/settings`; `GET /admin/audit?limit=50`.
+
+- [ ] **Step 1:** Testes:
+  - `AesGcmCipherTest`: `roundTrip`, `sameValueGivesDifferentCiphertext` (IV aleatório), `tamperedCiphertextFails`, `wrongKeyFails`.
+  - `CredentialServiceTest`: `vaultValueWinsOverEnv`, `fallsBackToEnvWhenVaultEmpty`, `putIsVisibleOnNextCall` (sem reiniciar).
+  - `AdminSecurityTest`: `publicRoutesStayOpen` (`/champions/findVersion` sem token → 200); `adminWithoutTokenIs401`; `loginWithWrongPasswordIs401Generic` (mesma mensagem para usuário ou senha errados); `sixthFailedLoginIn15MinIs429`; `firstLoginReturnsEnrollmentUriOnce`; `loginWithoutTotpAfterEnrollmentIs401`; `expiredTokenIs401`; `remoteIpIsForbidden` (requisição de `10.0.0.5` → 403); `adminDisabledWithoutMasterKey` (`/admin/**` → 503 problem).
+  - `SecretLeakTest`: após `PUT /admin/secrets/RIOT_API_KEY` com `RGAPI-segredo-de-teste-1234`, o valor não aparece em nenhuma resposta, no log capturado (`OutputCaptureExtension`), no documento Mongo (só ciphertext) nem no `admin_audit`; `GET /admin/secrets` devolve `last4 = "1234"`.
+- [ ] **Step 2:** Rodar. Esperado: FAIL.
+- [ ] **Step 3:** Implementar. JWT HS256 com chave derivada da master key por HKDF-SHA256 (`info = "yoursummoner-admin-jwt"`), expiração de 15 min. CSRF desligado só em `/admin/**` (API stateless com Bearer); público continua só GET/OPTIONS/HEAD.
+- [ ] **Step 4:** Rodar `mvn -q verify`. Esperado: PASS.
+- [ ] **Step 5:** Documentar em `docs/admin.md`: como gerar a master key (`[Convert]::ToBase64String((1..32 | % {Get-Random -Max 256}) -as [byte[]])` só como exemplo; recomendar `RandomNumberGenerator`), como gerar o hash BCrypt e que essas 3 variáveis vão no `.env`, nunca no git.
+- [ ] **Step 6:** Commit `feat: administração de segredos e parâmetros com cofre criptografado`.
+
+### Task 13: Tela de administração no YourSummoner-Web
+
+**Delegado:** subagente `go-web-developer` (repositório `D:\Workspace\YourSummoner-Web`).
+
+**Files:** em `YourSummoner-Web`: handlers e templates de `/admin` (login, segredos, parâmetros, auditoria), client tipado para `/admin/**`, testes com `httptest`.
+
+- [ ] **Step 1:** Testes `httptest`: login ok grava cookie `HttpOnly; SameSite=Strict; Path=/admin`; formulário sem token CSRF → 403; a página de segredos mostra só `••••1234`; campo de segredo é `type=password` e nunca vem preenchido; 401 da API redireciona para o login; mostra o QR/URI de TOTP só na primeira vez.
+- [ ] **Step 2:** Implementar só com stdlib (`net/http`, `html/template`), seguindo o padrão já existente no repositório.
+- [ ] **Step 3:** `go test ./...` e `go vet ./...` passam.
+- [ ] **Step 4:** Commit local no `YourSummoner-Web`.
+
 ### Task 11: Verificação final
 
 **Delegado:** `quarkus-auditor` adaptado (somente leitura) + Opus.
@@ -289,4 +331,5 @@
 - [ ] **Step 1:** `mvn verify`. Esperado: todos os testes passam; anotar a cobertura do JaCoCo.
 - [ ] **Step 2:** Subir a app contra o Mongo local da Task 10 com `RIOT_API_KEY` do `.env`. Conferir que `GET /your-summoner/patches` lista versões e um patch fica `READY`.
 - [ ] **Step 3:** Rodar com `yoursummoner.locale=en_US` e conferir que `find-champion/Ahri` vem em inglês e o `pt_BR` continua no Mongo.
-- [ ] **Step 4:** Auditoria somente leitura contra o spec e o ADR 0001, com relatório HIGH/MEDIUM/LOW.
+- [ ] **Step 4:** Trocar a chave da Riot pela tela `/admin` do Web e conferir que a chamada seguinte usa a chave nova sem reiniciar.
+- [ ] **Step 5:** Auditoria somente leitura contra o spec e o ADR 0001, com relatório HIGH/MEDIUM/LOW, incluindo revisão de segurança da Task 12.
