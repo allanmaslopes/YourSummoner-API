@@ -1,4 +1,4 @@
-# Configura a área de admin no .env sem mostrar os segredos na tela.
+﻿# Configura a área de admin no .env sem mostrar os segredos na tela.
 # Uso: powershell -NoProfile -ExecutionPolicy Bypass -File tools\setup-admin.ps1
 # Gera YOURSUMMONER_MASTER_KEY (se ainda não existir), pede usuário e senha e grava o hash BCrypt da senha.
 $ErrorActionPreference = 'Stop'
