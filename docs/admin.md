@@ -35,12 +35,14 @@ Opção 2, com `htpasswd` (Apache): `htpasswd -nBC 12 "" | tr -d ':\n' | sed 's/
 
 ## `.env`
 
-Copie `.env.example` para `.env` e preencha. O hash BCrypt contém `$`: ponha entre aspas simples (`'...'`) para que nenhum shell ou ferramenta expanda.
+O jeito mais simples: `powershell -NoProfile -ExecutionPolicy Bypass -File tools\setup-admin.ps1` (gera a chave mestra, pede usuário e senha sem mostrar e grava o hash; também copia a chave mestra para o `.env` do `yoursummoner_collector`).
+
+Manualmente: copie `.env.example` para `.env` e preencha. O `.env` é lido pelo Spring como `.properties` (`spring.config.import` no `.claude/run-api.cmd`), então **não** ponha aspas no hash: elas virariam parte do valor.
 
 ```
 YOURSUMMONER_MASTER_KEY=<base64 de 32 bytes>
 YOURSUMMONER_ADMIN_USER=admin
-YOURSUMMONER_ADMIN_PASSWORD_HASH='$2a$12$...'
+YOURSUMMONER_ADMIN_PASSWORD_HASH=$2a$12$...
 ```
 
 ## Como funciona
