@@ -61,6 +61,7 @@ yoursummoner:
     lock-stale-after: 15m
 
 springdoc:
+  writer-with-order-by-keys: true
   swagger-ui:
     path: /swagger-ui.html
   info:
