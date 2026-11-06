@@ -16,6 +16,105 @@ tags:
     cada um.
   name: Patches
 paths:
+  /admin/audit:
+    get:
+      operationId: recent
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEntry"
+          description: OK
+      tags:
+      - admin-audit-controller
+  /admin/secrets:
+    get:
+      operationId: list
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SecretMetadata"
+          description: OK
+      tags:
+      - admin-secrets-controller
+  /admin/secrets/{name}:
+    put:
+      operationId: put_1
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretValueRequest"
+        required: true
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - admin-secrets-controller
+  /admin/session:
+    post:
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+          description: OK
+      tags:
+      - admin-session-controller
+  /admin/settings:
+    get:
+      operationId: get
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsDto"
+          description: OK
+      tags:
+      - admin-settings-controller
+    put:
+      operationId: put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsDto"
+        required: true
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - admin-settings-controller
   /champions/by-mastery/{nick}/{tag}:
     get:
       operationId: byMastery
@@ -672,6 +771,20 @@ paths:
       - Summoners
 components:
   schemas:
+    AuditEntry:
+      type: object
+      properties:
+        action:
+          type: string
+        actor:
+          type: string
+        at:
+          type: string
+          format: date-time
+        ip:
+          type: string
+        target:
+          type: string
     ChampionDetailResponse:
       type: object
       properties:
@@ -994,6 +1107,58 @@ components:
         wins:
           type: integer
           format: int32
+    SecretMetadata:
+      type: object
+      properties:
+        last4:
+          type: string
+        name:
+          type: string
+          enum:
+          - RIOT_API_KEY
+          - ADMIN_TOTP
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+    SecretValueRequest:
+      type: object
+      properties:
+        value:
+          type: string
+    SessionRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          maxLength: 256
+          minLength: 0
+        totp:
+          type: string
+          maxLength: 16
+          minLength: 0
+        user:
+          type: string
+          maxLength: 256
+          minLength: 0
+    SessionResponse:
+      type: object
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+        token:
+          type: string
+        totpEnrollmentUri:
+          type: string
+    SettingsDto:
+      type: object
+      properties:
+        defaultPlatform:
+          type: string
+        locale:
+          type: string
     Skin:
       type: object
       properties:

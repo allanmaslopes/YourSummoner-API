@@ -62,6 +62,7 @@ class AdminSecurityTest {
     @Test
     void publicRoutesStayOpen() throws Exception {
         mvc.perform(get("/actuator/health").with(from("203.0.113.9"))).andExpect(status().isOk());
+        mvc.perform(get("/v3/api-docs.yaml").with(from("203.0.113.9"))).andExpect(status().isOk());
         // a public prefix is open to reads only
         mvc.perform(post("/champions/anything").with(from("203.0.113.9"))).andExpect(status().isUnauthorized());
         mvc.perform(get("/something-else").with(from("203.0.113.9"))).andExpect(status().isUnauthorized());
