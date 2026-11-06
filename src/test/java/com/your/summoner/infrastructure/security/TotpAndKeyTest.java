@@ -84,13 +84,14 @@ class TotpAndKeyTest {
             }
         });
         for (int i = 0; i < 5; i++) {
-            assertTrue(limiter.retryAfterSeconds("1.1.1.1").isEmpty());
-            limiter.recordFailure("1.1.1.1");
+            assertTrue(limiter.tryAcquire("1.1.1.1").isEmpty());
         }
-        long retry = limiter.retryAfterSeconds("1.1.1.1").orElseThrow();
+        long retry = limiter.tryAcquire("1.1.1.1").orElseThrow();
         assertTrue(retry > 0 && retry <= 900 + 1);
-        assertTrue(limiter.retryAfterSeconds("2.2.2.2").isEmpty());
+        assertTrue(limiter.tryAcquire("2.2.2.2").isEmpty());
+        limiter.release("2.2.2.2");
+        assertTrue(limiter.tryAcquire("2.2.2.2").isEmpty());
         clock[0] = Clock.fixed(start.plusSeconds(15 * 60), ZoneOffset.UTC);
-        assertTrue(limiter.retryAfterSeconds("1.1.1.1").isEmpty());
+        assertTrue(limiter.tryAcquire("1.1.1.1").isEmpty());
     }
 }

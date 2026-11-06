@@ -24,9 +24,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationUpdate;
-import org.springframework.data.mongodb.core.aggregation.ComparisonOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -65,7 +62,8 @@ public class MongoStaticDataRepository implements StaticDataRepository {
     @Override
     public Optional<Patch> findActivePatch() {
         return Optional.ofNullable(cached(activePatchCache, "active", () -> mongoTemplate.findOne(
-                Query.query(Criteria.where("active").is(true)), PatchDocument.class), Objects::nonNull))
+                Query.query(Criteria.where("active").is(true)).with(Sort.by("order")), PatchDocument.class),
+                Objects::nonNull))
                 .map(mapper::toPatch);
     }
 
@@ -108,12 +106,12 @@ public class MongoStaticDataRepository implements StaticDataRepository {
 
     @Override
     public synchronized void activate(String version) {
-        if (!mongoTemplate.exists(patchQuery(version), PatchDocument.class)) {
+        if (mongoTemplate.updateFirst(patchQuery(version), new Update().set("active", true), PatchDocument.class)
+                .getMatchedCount() == 0) {
             throw new IllegalArgumentException("Unknown patch: " + version);
         }
-        AggregationUpdate update = Aggregation.newUpdate().set("active")
-                .toValue(ComparisonOperators.Eq.valueOf("version").equalToValue(version));
-        mongoTemplate.updateMulti(new Query(), update, PatchDocument.class);
+        mongoTemplate.updateMulti(Query.query(Criteria.where("version").ne(version)),
+                new Update().set("active", false), PatchDocument.class);
         activePatchCache.clear();
     }
 

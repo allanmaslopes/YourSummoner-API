@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -101,11 +102,21 @@ class MongoStaticDataRepositoryTest {
         repository.activate("14.2.1");
         repository.activate("14.2.1");
 
-        assertThat(repository.findAllPatches()).filteredOn(Patch::active)
-                .extracting(Patch::version).containsExactly("14.2.1");
+        assertThat(mongoTemplate.count(Query.query(Criteria.where("active").is(true)), PatchDocument.class))
+                .isEqualTo(1);
         assertThat(repository.findActivePatch()).get().extracting(Patch::version).isEqualTo("14.2.1");
         assertThat(repository.findPatch(PATCH).orElseThrow().active()).isFalse();
         assertThat(repository.findPatch("13.24.1").orElseThrow().active()).isFalse();
+    }
+
+    @Test
+    void findActivePrefersNewestWhenTwoAreActive() {
+        repository.mergeVersions(List.of("14.2.1", PATCH));
+        mongoTemplate.updateMulti(new Query(),
+                new org.springframework.data.mongodb.core.query.Update().set("active", true), PatchDocument.class);
+        repository.markReady(PATCH, PT_BR); // clears the active-patch cache after the direct database update
+
+        assertThat(repository.findActivePatch()).get().extracting(Patch::version).isEqualTo("14.2.1");
     }
 
     @Test

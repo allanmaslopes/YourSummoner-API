@@ -5,6 +5,7 @@ import com.your.summoner.application.port.out.AuditLog;
 import com.your.summoner.application.port.out.SecretStore;
 import com.your.summoner.domain.model.SecretName;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -34,18 +35,22 @@ public class AdminAuthService {
     private final AuditLog audit;
     private final LoginRateLimiter limiter;
     private final Clock clock;
-    private final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
-    // Valid hash used when the configured one is unusable, so BCrypt work never disappears.
-    private final String dummyHash = bcrypt.encode("not-the-password");
+    private final PasswordEncoder passwordEncoder;
     private final JwtEncoder encoder;
 
     public AdminAuthService(AdminProperties properties, MasterKey masterKey, SecretStore secrets, AuditLog audit,
                             LoginRateLimiter limiter, Clock clock) {
+        this(properties, masterKey, secrets, audit, limiter, clock, new BCryptPasswordEncoder());
+    }
+
+    AdminAuthService(AdminProperties properties, MasterKey masterKey, SecretStore secrets, AuditLog audit,
+                     LoginRateLimiter limiter, Clock clock, PasswordEncoder passwordEncoder) {
         this.properties = properties;
         this.secrets = secrets;
         this.audit = audit;
         this.limiter = limiter;
         this.clock = clock;
+        this.passwordEncoder = passwordEncoder;
         this.encoder = masterKey.present() ? new NimbusJwtEncoder(new ImmutableSecret<>(
                 new SecretKeySpec(masterKey.derive(JWT_INFO), "HmacSHA256"))) : null;
     }
@@ -54,7 +59,7 @@ public class AdminAuthService {
         if (encoder == null) {
             throw new IllegalStateException("Administration is disabled");
         }
-        OptionalLong blocked = limiter.retryAfterSeconds(ip);
+        OptionalLong blocked = limiter.tryAcquire(ip);
         if (blocked.isPresent()) {
             throw new TooManyLoginAttemptsException(blocked.getAsLong());
         }
@@ -80,11 +85,11 @@ public class AdminAuthService {
                 .issuedAt(now).expiresAt(expires).claim("scope", "ADMIN").build();
         String token = encoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
                 .getTokenValue();
+        limiter.release(ip);
         return new AdminSession(token, expires, enrollmentUri);
     }
 
     private InvalidCredentialsException fail(String ip) {
-        limiter.recordFailure(ip);
         // Actor is not the typed user name: it may hold a password typed in the wrong field.
         audit.record("unknown", "login.failure", "session", ip);
         return new InvalidCredentialsException();
@@ -96,12 +101,9 @@ public class AdminAuthService {
         String input = tooLong ? "x" : candidate;
         boolean ok;
         try {
-            ok = bcrypt.matches(input, properties.passwordHash());
+            ok = passwordEncoder.matches(input, properties.passwordHash());
         } catch (IllegalArgumentException e) {
             ok = false;
-        }
-        if (!ok) {
-            bcrypt.matches(input, dummyHash); // keeps timing close to the success path for malformed hashes
         }
         return ok && !tooLong;
     }
