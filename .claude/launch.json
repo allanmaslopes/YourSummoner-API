@@ -36,6 +36,27 @@
         "cd /d D:\\Workspace\\YourSummoner-Web && D:\\Workspace\\Languages-Frameworks\\go1.26.9\\bin\\go.exe run ."
       ],
       "port": 3000
+    },
+    {
+      "name": "collector-br1",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "D:\\Workspace\\yoursummoner_collector\\.claude\\run-collector.cmd",
+        "--collector.platforms=BR1"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "processor-test",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "D:\\Workspace\\yoursummoner_processor\\.claude\\run-processor.cmd",
+        "--processor.min-games=3",
+        "--processor.min-occurrences=2"
+      ],
+      "port": 8082
     }
   ]
 }
