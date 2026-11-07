@@ -12,3 +12,5 @@ Esta pasta reúne a documentação de referência sobre o League of Legends e a 
 ---
 
 Para o planejamento de novas funcionalidades e evolução do catálogo, consulte também [`../roadmap.md`](../roadmap.md).
+
+- [Glossário](glossario.md) — termos do jogo, das fontes de dados da Riot e da arquitetura do YourSummoner.
