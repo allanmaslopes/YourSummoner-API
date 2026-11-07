@@ -1,0 +1,62 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "D:/Workspace/YourSummoner-API/.claude/run-api.cmd"
+      ],
+      "port": 8080
+    },
+    {
+      "name": "riot-mock",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        ".claude/riot-mock.py"
+      ],
+      "port": 8089
+    },
+    {
+      "name": "api-mock",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "D:/Workspace/YourSummoner-API/.claude/run-api.cmd",
+        "--riot.api.base-url-template=http://localhost:8089/riot/{host}"
+      ],
+      "port": 8080
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d D:\\Workspace\\YourSummoner-Web && D:\\Workspace\\Languages-Frameworks\\go1.26.9\\bin\\go.exe run ."
+      ],
+      "port": 3000
+    },
+    {
+      "name": "collector-br1",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "D:\\Workspace\\yoursummoner_collector\\.claude\\run-collector.cmd",
+        "--collector.platforms=BR1"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "processor-test",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "D:\\Workspace\\yoursummoner_processor\\.claude\\run-processor.cmd",
+        "--processor.min-games=3",
+        "--processor.min-occurrences=2"
+      ],
+      "port": 8082
+    }
+  ]
+}
