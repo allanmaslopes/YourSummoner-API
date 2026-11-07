@@ -3,6 +3,8 @@ package com.your.summoner.infrastructure.adapter.in.rest.admin;
 import com.your.summoner.domain.exception.InvalidInputException;
 import com.your.summoner.infrastructure.security.InvalidCredentialsException;
 import com.your.summoner.infrastructure.security.TooManyLoginAttemptsException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -11,6 +13,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /** Messages are fixed strings: nothing from the request or from a secret reaches the body. */
+// Antes do ProblemDetailsHandler (catch-all Exception): sem ordem explícita, a ordem de varredura
+// muda entre Windows e Linux e o login inválido virava 500 no CI.
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(basePackageClasses = AdminExceptionHandler.class)
 class AdminExceptionHandler {
 
