@@ -20,8 +20,8 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
         "riot.resilience.retry-delay=10ms", "riot.resilience.retry-jitter=0ms",
         "riot.resilience.minimum-calls=4", "riot.resilience.sliding-window=4",
         "yoursummoner.patch-sync.enabled=false",
-        // These tests never touch Mongo; skip the embedded server.
-        "spring.autoconfigure.exclude=de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration"})
+        // MongoIndexes cria índices na subida: sem o embarcado, o teste dependia de um Mongo local (falhava no CI).
+        "de.flapdoodle.mongodb.embedded.version=8.0.0"})
 public abstract class RiotApiWireMock {
     public static final String RIOT = "/riot";
     protected static final WireMockServer wireMock = new WireMockServer(options().dynamicPort());
