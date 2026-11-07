@@ -2,6 +2,7 @@ package com.your.summoner.application.service;
 
 import com.your.summoner.application.port.in.SyncPatchesUseCase;
 import com.your.summoner.application.port.out.AuditLog;
+import com.your.summoner.application.port.out.SecretStore;
 import com.your.summoner.application.port.out.SettingsStore;
 import com.your.summoner.domain.exception.InvalidInputException;
 import com.your.summoner.domain.model.AppSettings;
@@ -101,6 +102,38 @@ class AdminServiceTest {
     }
 
     @Test
+    void listIncludesManageableSecretsNotYetStored() {
+        List<SecretMetadata> listed = serviceUsing(new CredentialServiceTest.MemoryStore()).list();
+
+        assertEquals(List.of(new SecretMetadata(SecretName.RIOT_API_KEY, "", null, null)), listed);
+    }
+
+    @Test
+    void listUsesStoredMetadataWhenPresent() {
+        SecretStore store = new CredentialServiceTest.MemoryStore() {
+            @Override
+            public List<SecretMetadata> list() {
+                return List.of(new SecretMetadata(SecretName.RIOT_API_KEY, "1234", Instant.now(), "admin"));
+            }
+        };
+
+        assertEquals("1234", serviceUsing(store).list().get(0).last4());
+    }
+
+    @Test
+    void listNeverIncludesAdminTotp() {
+        SecretStore store = new CredentialServiceTest.MemoryStore() {
+            @Override
+            public List<SecretMetadata> list() {
+                return List.of(new SecretMetadata(SecretName.ADMIN_TOTP, "", Instant.now(), "admin"));
+            }
+        };
+
+        assertEquals(List.of(SecretName.RIOT_API_KEY), serviceUsing(store).list().stream()
+                .map(SecretMetadata::name).toList());
+    }
+
+    @Test
     void settingsPutIsStoredAndAudited() {
         service.put(new AppSettings("en_US", Platform.NA1), "admin", "127.0.0.1");
         assertEquals(new AppSettings("en_US", Platform.NA1), service.get());
@@ -148,5 +181,28 @@ class AdminServiceTest {
         service.recent(0);
         service.recent(100000);
         assertEquals(List.of(1, 200), requestedLimits);
+    }
+
+    private AdminService serviceUsing(SecretStore store) {
+        return new AdminService(store, new SettingsStore() {
+            @Override
+            public AppSettings get() {
+                return stored;
+            }
+
+            @Override
+            public void put(AppSettings value, String actor) {
+                stored = value;
+            }
+        }, new AuditLog() {
+            @Override
+            public void record(String actor, String action, String target, String ip) {
+            }
+
+            @Override
+            public List<AuditEntry> recent(int limit) {
+                return List.of();
+            }
+        }, sync, Runnable::run);
     }
 }

@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @Service
 public class AdminService implements ManageSecretsUseCase, ManageSettingsUseCase, ViewAuditUseCase {
@@ -42,7 +44,13 @@ public class AdminService implements ManageSecretsUseCase, ManageSettingsUseCase
 
     @Override
     public List<SecretMetadata> list() {
-        return secrets.list().stream().filter(m -> m.name().manageable()).toList();
+        Map<SecretName, SecretMetadata> stored = secrets.list().stream()
+                .filter(m -> m.name().manageable())
+                .collect(Collectors.toMap(SecretMetadata::name, m -> m));
+        return java.util.Arrays.stream(SecretName.values())
+                .filter(SecretName::manageable)
+                .map(name -> stored.getOrDefault(name, new SecretMetadata(name, "", null, null)))
+                .toList();
     }
 
     @Override

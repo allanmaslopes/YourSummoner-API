@@ -33,7 +33,7 @@
       "runtimeExecutable": "cmd",
       "runtimeArgs": [
         "/c",
-        "cd /d D:\\Workspace\\YourSummoner-Web && go run ."
+        "cd /d D:\\Workspace\\YourSummoner-Web && D:\\Workspace\\Languages-Frameworks\\go1.26.9\\bin\\go.exe run ."
       ],
       "port": 3000
     }
