@@ -19,7 +19,7 @@ Relatos (não oficiais): uma tarefa no Sol High gastou ~60% da janela; um prompt
 
 1. **Escada de modelos:** Luna → Terra → Sol. Subir só quando a revisão reprovar. `delegate.ps1` já usa Terra/medium por padrão; acrescentar `-To codex -Model luna` nas tarefas mecânicas.
 2. **Prompt curto:** a spec cita trechos e caminhos exatos; nada de "leia o plano inteiro" quando só uma task importa (recortar a task para o arquivo da tarefa).
-3. **AGENTS.md global do Codex:** `~/.codex/AGENTS.md` (3,2 KB, cópia das regras do orquestrador) entra em todo turno de toda delegação. Opções: encolher para as regras de executor (verificar se a sincronização do app Codex com o Claude o reescreve) ou mantê-lo e seguir com o aviso de papel. Decisão do usuário.
+3. **AGENTS.md global do Codex (feito em 08/11, decisão do usuário):** `~/.codex/AGENTS.md` passou de 3,2 KB (cópia das regras do orquestrador) para 1,3 KB só com regras de executor; backup em `AGENTS.md.bak-20261108`. O app do Codex não o sincroniza com o `CLAUDE.md`. O aviso de papel do `codex-agent.ps1` foi removido.
 4. **Saída de ferramentas:** logs de Maven/Spring entram no contexto do Codex. O rodapé já usa `mvn -q`; avaliar a opção de limite de saída de ferramenta do Codex (`tool_output_token_limit`, citada em guia de terceiros — confirmar na versão instalada antes de usar).
 5. **Uma rodada de revisão por task** e LOW direto para issue; a segunda rodada só para HIGH.
 6. **Gemini e Ollama** para checagem de design e rascunhos (não gastam o Codex nem o Claude).
