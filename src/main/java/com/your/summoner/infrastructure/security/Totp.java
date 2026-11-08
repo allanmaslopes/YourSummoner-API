@@ -45,16 +45,23 @@ public final class Totp {
 
     /** Accepts the previous, current and next step; compares all three in constant time. */
     public static boolean verify(String seed, String candidate, long epochSeconds) {
+        return matchingStep(seed, candidate, epochSeconds) >= 0;
+    }
+
+    /** Time step the candidate matches (previous, current or next), or -1. Always checks all three. */
+    public static long matchingStep(String seed, String candidate, long epochSeconds) {
         if (candidate == null || !candidate.matches("\\d{6}")) {
-            return false;
+            return -1;
         }
         byte[] given = candidate.getBytes(StandardCharsets.US_ASCII);
         long step = epochSeconds / 30;
-        boolean ok = false;
+        long match = -1;
         for (long s = step - 1; s <= step + 1; s++) {
-            ok |= MessageDigest.isEqual(given, code(seed, s).getBytes(StandardCharsets.US_ASCII));
+            if (MessageDigest.isEqual(given, code(seed, s).getBytes(StandardCharsets.US_ASCII))) {
+                match = s;
+            }
         }
-        return ok;
+        return match;
     }
 
     private static String base32(byte[] data) {

@@ -132,6 +132,28 @@ class AdminSecurityTest {
     }
 
     @Test
+    void reusedTotpCodeIsRejected() throws Exception {
+        AdminFixture.login(mvc, freshIp(), USER, PASSWORD, "");
+        String code = AdminFixture.currentCode(secrets);
+        assertThat(AdminFixture.login(mvc, freshIp(), USER, PASSWORD, code).getResponse().getStatus()).isEqualTo(200);
+        MvcResult reused = AdminFixture.login(mvc, freshIp(), USER, PASSWORD, code);
+        MvcResult invalid = AdminFixture.login(mvc, freshIp(), USER, PASSWORD, "000000");
+        assertThat(reused.getResponse().getStatus()).isEqualTo(401);
+        assertThat(reused.getResponse().getContentAsString()).isEqualTo(invalid.getResponse().getContentAsString());
+    }
+
+    @Test
+    void olderStepInWindowIsRejectedAfterNewerUsed() throws Exception {
+        AdminFixture.login(mvc, freshIp(), USER, PASSWORD, "");
+        String seed = secrets.find(com.your.summoner.domain.model.SecretName.ADMIN_TOTP).orElseThrow();
+        long step = Instant.now().getEpochSecond() / 30;
+        assertThat(AdminFixture.login(mvc, freshIp(), USER, PASSWORD, Totp.code(seed, step)).getResponse().getStatus())
+                .isEqualTo(200);
+        assertThat(AdminFixture.login(mvc, freshIp(), USER, PASSWORD, Totp.code(seed, step - 1)).getResponse().getStatus())
+                .isEqualTo(401);
+    }
+
+    @Test
     void loginWithoutTotpAfterEnrollmentIs401() throws Exception {
         AdminFixture.login(mvc, freshIp(), USER, PASSWORD, "");
         assertThat(AdminFixture.login(mvc, freshIp(), USER, PASSWORD, "").getResponse().getStatus()).isEqualTo(401);

@@ -37,6 +37,8 @@ public class AdminAuthService {
     private final Clock clock;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder encoder;
+    // shortcut: in memory, lost on restart (a code may be reused once after a restart); persist if that matters.
+    private long lastTotpStep = -1;
 
     public AdminAuthService(AdminProperties properties, MasterKey masterKey, SecretStore secrets, AuditLog audit,
                             LoginRateLimiter limiter, Clock clock) {
@@ -75,7 +77,8 @@ public class AdminAuthService {
             String fresh = Totp.newSeed();
             secrets.put(SecretName.ADMIN_TOTP, fresh, properties.user());
             enrollmentUri = Totp.uri(fresh, ISSUER, properties.user());
-        } else if (!Totp.verify(seed.get(), totp, clock.instant().getEpochSecond())) {
+            lastTotpStep = -1; // new seed, new counter
+        } else if (!acceptStep(Totp.matchingStep(seed.get(), totp, clock.instant().getEpochSecond()))) {
             throw fail(ip);
         }
         audit.record(properties.user(), enrollmentUri == null ? "login.success" : "login.enroll", "session", ip);
@@ -87,6 +90,15 @@ public class AdminAuthService {
                 .getTokenValue();
         limiter.release(ip);
         return new AdminSession(token, expires, enrollmentUri);
+    }
+
+    /** One code, one use: only a step greater than the last accepted one passes. */
+    private synchronized boolean acceptStep(long step) {
+        if (step < 0 || step <= lastTotpStep) {
+            return false;
+        }
+        lastTotpStep = step;
+        return true;
     }
 
     private InvalidCredentialsException fail(String ip) {
