@@ -1,5 +1,6 @@
 package com.your.summoner.infrastructure.adapter.out.riot;
 
+import com.your.summoner.infrastructure.adapter.out.DeadlineRetry;
 import com.your.summoner.infrastructure.adapter.out.ExternalCalls;
 import com.your.summoner.infrastructure.adapter.out.RetryableFailure;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
@@ -15,13 +16,18 @@ import java.util.function.Supplier;
 
 @Component
 public class RiotResilience {
+    static final String DEFAULT_TOTAL_DEADLINE = "7s";
+
     private final CircuitBreakerRegistry circuitBreakers;
     private final RetryRegistry retries;
+    private final Duration totalDeadline;
 
     public RiotResilience(@Value("${riot.resilience.retry-delay:250ms}") Duration delay,
                           @Value("${riot.resilience.retry-jitter:100ms}") Duration jitter,
                           @Value("${riot.resilience.minimum-calls:20}") int minimumCalls,
-                          @Value("${riot.resilience.sliding-window:20}") int slidingWindow) {
+                          @Value("${riot.resilience.sliding-window:20}") int slidingWindow,
+                          @Value("${riot.resilience.total-deadline:" + DEFAULT_TOTAL_DEADLINE + "}") Duration totalDeadline) {
+        this.totalDeadline = DeadlineRetry.requirePositive("riot.resilience.total-deadline", totalDeadline);
         var transientFailure = new RetryableFailure();
         var circuitConfig = CircuitBreakerConfig.custom()
                 .failureRateThreshold(50).minimumNumberOfCalls(minimumCalls).slidingWindowSize(slidingWindow)
@@ -40,7 +46,7 @@ public class RiotResilience {
         var circuit = circuitBreakers.circuitBreaker(name);
         var retry = retries.retry(name);
         // The circuit observes every HTTP attempt, including retries.
-        return retry.executeSupplier(() -> circuit.executeSupplier(
+        return DeadlineRetry.call(RiotErrorDecoder.SERVICE, totalDeadline, retry, () -> circuit.executeSupplier(
                 () -> ExternalCalls.call(RiotErrorDecoder.SERVICE, request)));
     }
 

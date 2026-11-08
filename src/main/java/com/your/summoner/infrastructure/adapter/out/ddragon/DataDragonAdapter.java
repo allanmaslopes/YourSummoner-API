@@ -5,42 +5,66 @@ import com.your.summoner.domain.exception.ExternalBadResponseException;
 import com.your.summoner.domain.exception.ExternalServiceUnavailableException;
 import com.your.summoner.domain.model.Champion;
 import com.your.summoner.domain.model.ChampionDetail;
+import com.your.summoner.infrastructure.adapter.out.DeadlineRetry;
 import com.your.summoner.infrastructure.adapter.out.ExternalCalls;
 import com.your.summoner.infrastructure.adapter.out.UpstreamNotFoundException;
 import com.your.summoner.infrastructure.adapter.out.ddragon.dto.DdChampionDetailListDto;
 import com.your.summoner.infrastructure.adapter.out.ddragon.dto.DdChampionListDto;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Component
-@Retry(name = "ddragon")
-@CircuitBreaker(name = "ddragon")
 public class DataDragonAdapter implements GameDataProvider {
 
     private static final String PUBLIC_CDN = "https://ddragon.leagueoflegends.com";
 
-    private final DataDragonApi api;
+    static final String DEFAULT_TOTAL_DEADLINE = "12s";
 
-    public DataDragonAdapter(DataDragonApi api) {
+    private final DataDragonApi api;
+    private final RetryRegistry retries;
+    private final CircuitBreakerRegistry circuitBreakers;
+    private final Duration totalDeadline;
+
+    public DataDragonAdapter(DataDragonApi api, RetryRegistry retries, CircuitBreakerRegistry circuitBreakers,
+                             @Value("${ddragon.resilience.total-deadline:" + DEFAULT_TOTAL_DEADLINE + "}")
+                             Duration totalDeadline) {
         this.api = api;
+        this.retries = retries;
+        this.circuitBreakers = circuitBreakers;
+        this.totalDeadline = DeadlineRetry.requirePositive("ddragon.resilience.total-deadline", totalDeadline);
+    }
+
+    /** Retry com prazo total por fora, circuit breaker por tentativa (mesma regra da Riot). */
+    private <T> T call(String notFoundAsUnavailable, Supplier<T> request) {
+        var circuit = circuitBreakers.circuitBreaker("ddragon");
+        return DeadlineRetry.call(DataDragonApi.SERVICE, totalDeadline, retries.retry("ddragon"),
+                () -> {
+                    try {
+                        return circuit.executeSupplier(() -> ExternalCalls.call(DataDragonApi.SERVICE, request));
+                    } catch (UpstreamNotFoundException exception) {
+                        // 403/404 do CDN no dia do patch: retentável, mas não é falha do circuito.
+                        if (notFoundAsUnavailable == null) {
+                            throw exception;
+                        }
+                        throw new ExternalServiceUnavailableException(DataDragonApi.SERVICE,
+                                notFoundAsUnavailable, exception);
+                    }
+                });
     }
 
     @Override
     public List<String> versions() {
-        List<String> versions;
-        try {
-            versions = ExternalCalls.call(DataDragonApi.SERVICE, api::versions);
-        } catch (UpstreamNotFoundException exception) {
-            throw new ExternalServiceUnavailableException(DataDragonApi.SERVICE,
-                    "versions.json not available", exception);
-        }
+        List<String> versions = call("versions.json not available", api::versions);
         if (versions == null || versions.isEmpty() || versions.stream().anyMatch(this::isBlank)) {
             throw badResponse("Empty or invalid versions list");
         }
@@ -49,13 +73,8 @@ public class DataDragonAdapter implements GameDataProvider {
 
     @Override
     public Map<Long, Champion> champions(String patch, String locale) {
-        DdChampionListDto dto;
-        try {
-            dto = ExternalCalls.call(DataDragonApi.SERVICE, () -> api.champions(patch, locale));
-        } catch (UpstreamNotFoundException exception) {
-            throw new ExternalServiceUnavailableException(DataDragonApi.SERVICE,
-                    "champion.json not available for version " + patch, exception);
-        }
+        DdChampionListDto dto = call("champion.json not available for version " + patch,
+                () -> api.champions(patch, locale));
         if (dto == null || dto.data() == null) {
             throw badResponse("Invalid champion list for version " + patch);
         }
@@ -76,8 +95,7 @@ public class DataDragonAdapter implements GameDataProvider {
     public Optional<ChampionDetail> championDetail(String patch, String locale, String championId) {
         DdChampionDetailListDto dto;
         try {
-            dto = ExternalCalls.call(DataDragonApi.SERVICE,
-                    () -> api.championDetail(patch, locale, championId));
+            dto = call(null, () -> api.championDetail(patch, locale, championId));
         } catch (UpstreamNotFoundException exception) {
             return Optional.empty();
         }

@@ -27,9 +27,14 @@ riot:
     base-url-template: https://{host}.api.riotgames.com
     connect-timeout: 2s
     read-timeout: 4s
+  resilience:
+    # Prazo total da operação, somando as novas tentativas (ADR 0002 (d)); deve ser > 0.
+    total-deadline: 7s
 
 ddragon:
   url: https://ddragon.leagueoflegends.com
+  resilience:
+    total-deadline: 12s
 
 cdragon:
   url: https://raw.communitydragon.org
